@@ -1,0 +1,6 @@
+{
+  "name": "Ridex Cafe - Modern F&B POS System",
+  "description": "Sistem Kasir (Point of Sale) Kafe Modern berstandar Loka F&B POS dengan antarmuka Dark Slate elegan, manajemen varian, split bill, rekap shift, dan struk termal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

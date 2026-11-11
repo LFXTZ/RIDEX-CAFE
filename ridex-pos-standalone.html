@@ -1,0 +1,2467 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ridex Cafe - Multi-Role F&B POS & KDS System (Loka Standard)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            stone: {
+              750: '#3D3028',
+              800: '#342821',
+              850: '#281E19',
+              900: '#201814',
+              950: '#140E0B',
+            },
+            amber: {
+              450: '#E5943B',
+              550: '#C57722',
+              600: '#D97706',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.5); border-radius: 4px; }
+    .receipt-paper {
+      background: #fffdf9;
+      color: #1e293b;
+      font-family: 'JetBrains Mono', monospace;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-stone-950 text-amber-50 antialiased select-none overflow-hidden h-screen w-screen flex flex-col">
+
+  <!-- ========================================== -->
+  <!-- 1. LAMAN LOGIN UTAMA (INITIAL VIEW)        -->
+  <!-- ========================================== -->
+  <div id="loginScreen" class="fixed inset-0 z-50 min-h-screen w-full flex items-center justify-center p-4 overflow-y-auto bg-stone-950 select-none">
+    <div class="fixed -top-32 -left-32 w-96 h-96 bg-amber-600/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="fixed -bottom-32 -right-32 w-96 h-96 bg-amber-700/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="my-auto max-h-[90vh] overflow-y-auto custom-scrollbar w-full max-w-md bg-stone-900/90 border border-stone-800 rounded-2xl p-6 shadow-2xl flex flex-col items-center relative z-10 backdrop-blur-xl">
+      <!-- Brand Logo & Mascot Lockup -->
+      <div class="flex flex-col items-center mb-1">
+        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#f5ede4] p-1.5 shadow-xl shadow-amber-950/30 border-2 border-amber-800/30 flex items-center justify-center overflow-hidden mb-2.5 group hover:scale-105 transition-transform duration-300">
+          <img src="/assets/aistudio/extra-large_4af77947.png" alt="Ridex Cafe Bear Mascot Logo" class="w-full h-full object-contain" onerror="this.style.display='none'; document.getElementById('bearSvgFallback').classList.remove('hidden');" />
+          <svg id="bearSvgFallback" class="w-full h-full hidden" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="45" fill="#f5ede4"/>
+            <circle cx="33" cy="30" r="10" fill="#4a2c11"/>
+            <circle cx="67" cy="30" r="10" fill="#4a2c11"/>
+            <circle cx="33" cy="30" r="5" fill="#f5ede4"/>
+            <circle cx="67" cy="30" r="5" fill="#f5ede4"/>
+            <circle cx="50" cy="50" r="28" fill="#ffffff" stroke="#4a2c11" stroke-width="4"/>
+            <circle cx="43" cy="45" r="3" fill="#4a2c11"/>
+            <circle cx="57" cy="45" r="3" fill="#4a2c11"/>
+            <ellipse cx="50" cy="54" rx="6" ry="4" fill="#4a2c11"/>
+            <path d="M44 57 Q50 63 56 57" stroke="#4a2c11" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M35 68 H65 V82 C65 86 60 88 50 88 C40 88 35 86 35 82 Z" fill="#4a2c11"/>
+            <ellipse cx="50" cy="76" rx="4" ry="6" fill="#f5ede4"/>
+          </svg>
+        </div>
+
+        <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white text-center font-sans">
+          RIDEX CAFE
+        </h1>
+        <p class="text-[11px] sm:text-xs font-bold text-amber-400 tracking-[0.22em] uppercase text-center mt-0.5">
+          YOUR DAILY ESCAPE
+        </p>
+      </div>
+
+      <div class="mt-2.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-950/80 border border-stone-800 text-[11px] text-stone-300">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Smart POS &amp; Multi-Role System · Online Sync OK</span>
+      </div>
+
+      <!-- PIN Input Display -->
+      <div class="w-full mt-5 flex flex-col items-center">
+        <span class="text-xs text-stone-400 font-medium mb-2.5 flex items-center gap-1.5">
+          <i data-lucide="lock" class="w-3.5 h-3.5 text-stone-500"></i>
+          <span>Masukkan PIN Kasir / Pegawai:</span>
+        </span>
+
+        <div class="flex items-center justify-center gap-3 h-9" id="pinDotsContainer">
+          <div class="w-3.5 h-3.5 rounded-full border-2 border-stone-700 bg-stone-950/60 transition-all duration-150" id="dot0"></div>
+          <div class="w-3.5 h-3.5 rounded-full border-2 border-stone-700 bg-stone-950/60 transition-all duration-150" id="dot1"></div>
+          <div class="w-3.5 h-3.5 rounded-full border-2 border-stone-700 bg-stone-950/60 transition-all duration-150" id="dot2"></div>
+          <div class="w-3.5 h-3.5 rounded-full border-2 border-stone-700 bg-stone-950/60 transition-all duration-150" id="dot3"></div>
+        </div>
+
+        <div id="loginErrorMessage" class="mt-2.5 text-xs text-rose-400 hidden flex items-center gap-1">
+          <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0"></i>
+          <span id="loginErrorText">PIN salah. Silakan coba lagi (1111, 2222, 3333).</span>
+        </div>
+      </div>
+
+      <!-- Keypad -->
+      <div class="w-full grid grid-cols-3 gap-2 mt-4">
+        <button onclick="pressPin('1')" class="h-11 rounded-xl bg-stone-950/80 hover:bg-stone-800 border border-stone-800 text-base font-bold font-mono text-amber-50 hover:text-amber-300 active:scale-95 transition-all">1</button>
+        <button onclick="pressPin('2')" class="h-11 rounded-xl bg-stone-950/80 hover:bg-stone-800 border border-stone-800 text-base font-bold font-mono text-amber-50 hover:text-amber-300 active:scale-95 transition-all">2</button>
+        <button onclick="pressPin('3')" class="h-11 rounded-xl bg-stone-950/80 hover:bg-stone-800 border border-stone-800 text-base font-bold font-mono text-amber-50 hover:text-amber-300 active:scale-95 transition-all">3</button>
+        <button onclick="pressPin('4')" class="h-11 rounded-xl bg-stone-950/80 hover:bg-stone-800 border border-stone-800 text-base font-bold font-mono text-amber-50 hover:text-amber-300 active:scale-95 transition-all">4</button>
+        <button onclick="pressPin('5')" class="h-11 rounded-xl bg-stone-950/80 hover:bg-stone-800 border border-stone-800 text-base font-bold font-mono text-amber-50 hover:text-amber-300 active:scale-95 transition-all">5</button>
+        <button onclick="pressPin('6')" class="h-11 rounded-xl bg-stone-950/80 hover:bg-stone-800 border border-stone-800 text-base font-bold font-mono text-amber-50 hover:text-amber-300 active:scale-95 transition-all">6</button>
+        <button onclick="pressPin('7')" class="h-11 rounded-xl bg-stone-950/80 hover:bg-stone-800 border border-stone-800 text-base font-bold font-mono text-amber-50 hover:text-amber-300 active:scale-95 transition-all">7</button>
+        <button onclick="pressPin('8')" class="h-11 rounded-xl bg-stone-950/80 hover:bg-stone-800 border border-stone-800 text-base font-bold font-mono text-amber-50 hover:text-amber-300 active:scale-95 transition-all">8</button>
+        <button onclick="pressPin('9')" class="h-11 rounded-xl bg-stone-950/80 hover:bg-stone-800 border border-stone-800 text-base font-bold font-mono text-amber-50 hover:text-amber-300 active:scale-95 transition-all">9</button>
+        <button onclick="clearPin()" class="h-11 rounded-xl bg-stone-950/40 hover:bg-stone-800 border border-stone-800 text-xs font-semibold text-stone-400 active:scale-95 transition-all">Hapus</button>
+        <button onclick="pressPin('0')" class="h-11 rounded-xl bg-stone-950/80 hover:bg-stone-800 border border-stone-800 text-base font-bold font-mono text-amber-50 hover:text-amber-300 active:scale-95 transition-all">0</button>
+        <button onclick="backspacePin()" class="h-11 rounded-xl bg-stone-950/40 hover:bg-stone-800 border border-stone-800 flex items-center justify-center text-stone-400 hover:text-rose-400 active:scale-95 transition-all" title="Backspace">
+          <i data-lucide="delete" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Quick Demo Login Buttons -->
+      <div class="w-full mt-5 pt-4 border-t border-stone-800/80">
+        <span class="text-[11px] font-semibold text-stone-400 uppercase tracking-wider block text-center mb-2.5">AKSES CEPAT DEMO PENGGUNA:</span>
+        <div class="space-y-2">
+          <!-- Owner Button -->
+          <button onclick="loginAsDemo('owner')" class="w-full p-2.5 rounded-xl bg-stone-950 hover:bg-emerald-950/30 border border-amber-600/40 hover:border-emerald-400 flex items-center justify-between text-left transition-all group">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-amber-600/15 border border-amber-600/30 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform"><i data-lucide="shield-check" class="w-4 h-4"></i></div>
+              <div>
+                <span class="text-xs font-bold text-stone-200 block group-hover:text-amber-300">🟢 [Login sebagai Pemilik / Owner]</span>
+                <span class="text-[10px] text-amber-400/80 font-mono">➔ (PIN Auto-fill: 1111) · Laporan Omset &amp; Menu</span>
+              </div>
+            </div>
+            <i data-lucide="arrow-right" class="w-4 h-4 text-stone-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all"></i>
+          </button>
+
+          <!-- Cashier Button -->
+          <button onclick="loginAsDemo('cashier')" class="w-full p-2.5 rounded-xl bg-stone-950 hover:bg-blue-950/30 border border-blue-500/40 hover:border-blue-400 flex items-center justify-between text-left transition-all group">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform"><i data-lucide="user-check" class="w-4 h-4"></i></div>
+              <div>
+                <span class="text-xs font-bold text-stone-200 block group-hover:text-blue-300">🔵 [Login sebagai Kasir / Cashier]</span>
+                <span class="text-[10px] text-blue-400/80 font-mono">➔ (PIN Auto-fill: 2222) · Rifqy Ridho P. (POS Kasir)</span>
+              </div>
+            </div>
+            <i data-lucide="arrow-right" class="w-4 h-4 text-stone-500 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all"></i>
+          </button>
+
+          <!-- Kitchen Button -->
+          <button onclick="loginAsDemo('kitchen')" class="w-full p-2.5 rounded-xl bg-stone-950 hover:bg-amber-950/30 border border-orange-500/40 hover:border-orange-400 flex items-center justify-between text-left transition-all group">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-orange-400 group-hover:scale-105 transition-transform"><i data-lucide="chef-hat" class="w-4 h-4"></i></div>
+              <div>
+                <span class="text-xs font-bold text-stone-200 block group-hover:text-orange-300">🟠 [Login sebagai Dapur / Kitchen (KDS)]</span>
+                <span class="text-[10px] text-orange-400/80 font-mono">➔ (PIN Auto-fill: 3333) · Chef Dapur (Tiket Pesanan)</span>
+              </div>
+            </div>
+            <i data-lucide="arrow-right" class="w-4 h-4 text-stone-500 group-hover:text-orange-400 group-hover:translate-x-0.5 transition-all"></i>
+          </button>
+        </div>
+      </div>
+
+      <p class="text-[10px] text-stone-500 mt-4 text-center">
+        Loka F&amp;B POS Engine · Ridex Cafe Architecture v2.5
+      </p>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 2. WORKSPACE AREA (LOGGED-IN STATE)        -->
+  <!-- ========================================== -->
+  <div id="mainWorkspace" class="flex-1 flex flex-col h-full w-full overflow-hidden hidden">
+    <!-- TOPBAR HEADER -->
+    <header class="h-16 px-4 bg-stone-900 border-b border-stone-800 flex items-center justify-between gap-3 shrink-0 z-20">
+      <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-[#f5ede4] p-1 shadow-md border border-amber-800/30 flex items-center justify-center overflow-hidden shrink-0">
+          <img src="/assets/aistudio/extra-large_4af77947.png" alt="Ridex Cafe Bear Mascot" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<i data-lucide=\'coffee\' class=\'w-5 h-5 text-amber-900\'></i>';" />
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-black text-base tracking-tight text-white uppercase font-sans">RIDEX CAFE</span>
+            <span class="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 hidden sm:inline-block">
+              YOUR DAILY ESCAPE
+            </span>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-stone-400" id="headerRoleSubtitle">
+            <!-- Dynamic Subtitle -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Switcher (for Owner) or Mode Badge -->
+      <div class="flex items-center gap-1 bg-stone-950 p-1 rounded-xl border border-stone-800" id="headerCenterNav">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Right Controls: Profile & Prominent LOG OUT -->
+      <div class="flex items-center gap-2 shrink-0">
+        <div id="cashierShortcuts" class="flex items-center gap-1.5">
+          <button onclick="openModal('holdModal')" class="relative px-3 py-2 text-xs font-medium text-stone-200 bg-stone-800 hover:bg-stone-700 rounded-lg border border-stone-700 flex items-center gap-1.5">
+            <i data-lucide="bookmark" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span class="hidden md:inline">Hold</span>
+            <span id="holdBadge" class="ml-1 px-1.5 py-0.2 bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold rounded-full">1</span>
+          </button>
+          <button onclick="openModal('tableModal')" class="px-3 py-2 text-xs font-medium text-stone-200 bg-stone-800 hover:bg-stone-700 rounded-lg border border-stone-700 flex items-center gap-1.5">
+            <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-cyan-400"></i>
+            <span class="hidden lg:inline">Peta</span>
+          </button>
+          <button onclick="openModal('shiftModal')" class="px-3 py-2 text-xs font-medium text-stone-200 bg-stone-800 hover:bg-stone-700 rounded-lg border border-stone-700 flex items-center gap-1.5">
+            <i data-lucide="bar-chart-3" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span class="hidden lg:inline">Rekap</span>
+          </button>
+        </div>
+
+        <!-- User Profile Pill -->
+        <div class="hidden sm:flex items-center gap-2 bg-stone-950 px-3 py-1.5 rounded-xl border border-stone-800">
+          <div class="w-6 h-6 rounded-full bg-stone-800 flex items-center justify-center text-stone-300">
+            <i data-lucide="user" class="w-3.5 h-3.5"></i>
+          </div>
+          <div class="text-left">
+            <span class="text-xs font-bold text-stone-200 block leading-tight" id="activeUserName">Rifqy Ridho P.</span>
+            <span class="text-[10px] text-stone-400 uppercase font-mono tracking-wider" id="activeUserRole">Kasir</span>
+          </div>
+        </div>
+
+        <!-- Prominent LOG OUT Button -->
+        <button onclick="openModal('logoutModal')" class="px-3 py-2 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/40 text-rose-300 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95" title="Keluar dari Sesi Akun">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Log Out</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN ROLE VIEWS -->
+    <main class="flex-1 overflow-hidden relative flex flex-col">
+      <!-- 1. OWNER VIEW -->
+      <section id="ownerView" class="flex-1 flex-col overflow-hidden hidden bg-stone-950">
+        <div class="p-3.5 bg-stone-900 border-b border-stone-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div class="flex items-center gap-1.5 bg-stone-950 p-1 rounded-xl border border-stone-800">
+            <button onclick="setOwnerTab('analytics')" id="ownerTabAnalytics" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">Analitik Penjualan</button>
+            <button onclick="setOwnerTab('menu')" id="ownerTabMenu" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-white">Manajemen Menu & Stok</button>
+            <button onclick="setOwnerTab('audit')" id="ownerTabAudit" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-white">Log Transaksi Pegawai</button>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="switchRole('cashier')" class="px-3 py-1.5 rounded-lg bg-amber-600/15 border border-amber-600/40 text-amber-300 text-xs font-semibold">Buka Kasir POS</button>
+            <button onclick="switchRole('kitchen')" class="px-3 py-1.5 rounded-lg bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-xs font-semibold">Buka Dapur KDS</button>
+          </div>
+        </div>
+
+        <div id="ownerSectionAnalytics" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+          <!-- 1. FILTER PERIODE WAKTU PENJUALAN (TIME RANGE SELECTOR) -->
+          <div class="bg-stone-900 p-4 rounded-2xl border border-stone-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="text-xs font-bold text-white uppercase tracking-wider">Filter Periode Waktu Penjualan</h3>
+                <p class="text-[11px] text-stone-400 mt-0.5">
+                  Periode Aktif: <strong class="text-amber-300 font-mono" id="ownerActivePeriodLabel">Hari Ini (Live Shift)</strong>
+                </p>
+              </div>
+            </div>
+
+            <!-- Time Range Tabs -->
+            <div class="flex flex-wrap items-center gap-1.5 bg-stone-950 p-1.5 rounded-xl border border-stone-800 w-full md:w-auto" id="ownerPeriodTabsContainer">
+              <button onclick="setOwnerTimeRange('today')" id="periodBtn_today" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">Hari Ini (Live)</button>
+              <button onclick="setOwnerTimeRange('yesterday')" id="periodBtn_yesterday" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-white">Kemarin</button>
+              <button onclick="setOwnerTimeRange('this_week')" id="periodBtn_this_week" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-white">Minggu Ini</button>
+              <button onclick="setOwnerTimeRange('this_month')" id="periodBtn_this_month" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-white">Bulan Ini</button>
+              <button onclick="setOwnerTimeRange('custom')" id="periodBtn_custom" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-white">Custom</button>
+            </div>
+
+            <!-- Custom Date Range Row with Emerald/Teal Confirmation Button -->
+            <div id="ownerCustomDateRow" class="hidden flex flex-wrap items-center gap-2 bg-stone-950 p-2 rounded-xl border border-stone-800 text-xs">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] text-stone-400 font-medium">Dari:</span>
+                <input type="date" id="ownerCustomStartDate" value="2026-11-01" class="bg-stone-900 border border-stone-700 rounded-lg px-2 py-1 text-white text-xs font-mono focus:border-amber-600 focus:outline-none">
+              </div>
+              <span class="text-stone-500">s/d</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] text-stone-400 font-medium">Sampai:</span>
+                <input type="date" id="ownerCustomEndDate" value="2026-11-09" class="bg-stone-900 border border-stone-700 rounded-lg px-2 py-1 text-white text-xs font-mono focus:border-amber-600 focus:outline-none">
+              </div>
+              <button onclick="applyCustomOwnerDate()" class="px-3.5 py-1.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all shadow-md shadow-amber-950/40 active:scale-95 cursor-pointer">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                <span>Terapkan Filter</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. METRIK PERBANDINGAN PENJUALAN (COMPARISON METRICS & GROWTH BADGES) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Card 1: Total Omzet -->
+            <div class="bg-stone-900 p-4 rounded-2xl border border-stone-800 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-medium text-stone-400">Total Omset Penjualan</span>
+                  <span class="p-1 rounded bg-amber-600/10 text-amber-400"><i data-lucide="dollar-sign" class="w-3.5 h-3.5"></i></span>
+                </div>
+                <span class="text-2xl font-black font-mono text-amber-400 mt-2 block tabular-nums" id="ownerTotalRevenue">Rp 3.840.000</span>
+              </div>
+              <div class="mt-3 pt-2.5 border-t border-stone-800/80 flex items-center justify-between text-[11px]">
+                <span class="font-semibold flex items-center gap-1 text-amber-400" id="ownerRevenueBadge">
+                  <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+                  <span>▲ +14.2% dibanding periode sebelumnya</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Card 2: Total Transaksi Struk -->
+            <div class="bg-stone-900 p-4 rounded-2xl border border-stone-800 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-medium text-stone-400">Total Transaksi / Struk</span>
+                  <span class="p-1 rounded bg-blue-500/10 text-blue-400"><i data-lucide="receipt" class="w-3.5 h-3.5"></i></span>
+                </div>
+                <span class="text-2xl font-black font-mono text-white mt-2 block tabular-nums" id="ownerTransCount">54 Struk</span>
+              </div>
+              <div class="mt-3 pt-2.5 border-t border-stone-800/80 flex items-center justify-between text-[11px]">
+                <span class="font-semibold flex items-center gap-1 text-amber-400" id="ownerOrdersBadge">
+                  <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+                  <span>▲ +8.0% vs kemarin</span>
+                </span>
+                <span class="text-stone-400 font-mono" id="ownerItemsSold">118 Porsi</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Rata-Rata Belanja (Ticket Size) -->
+            <div class="bg-stone-900 p-4 rounded-2xl border border-stone-800 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-medium text-stone-400">Rata-Rata Belanja (Ticket Size)</span>
+                  <span class="p-1 rounded bg-amber-700/10 text-cyan-400"><i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i></span>
+                </div>
+                <span class="text-2xl font-black font-mono text-cyan-400 mt-2 block tabular-nums" id="ownerAvgTicket">Rp 71.100</span>
+              </div>
+              <div class="mt-3 pt-2.5 border-t border-stone-800/80 flex items-center justify-between text-[11px]">
+                <span class="font-semibold flex items-center gap-1 text-amber-400" id="ownerAvgTicketBadge">
+                  <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+                  <span>▲ +5.7% vs kemarin</span>
+                </span>
+                <span class="text-stone-400">Per Tamu</span>
+              </div>
+            </div>
+
+            <!-- Card 4: Estimasi Margin Laba Kotor -->
+            <div class="bg-stone-900 p-4 rounded-2xl border border-stone-800 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-medium text-stone-400">Estimasi Margin Laba Kotor</span>
+                  <span class="p-1 rounded bg-amber-500/10 text-amber-400"><i data-lucide="percent" class="w-3.5 h-3.5"></i></span>
+                </div>
+                <span class="text-2xl font-black font-mono text-amber-400 mt-2 block tabular-nums" id="ownerProfitMargin">68.4%</span>
+              </div>
+              <div class="mt-3 pt-2.5 border-t border-stone-800/80 flex items-center justify-between text-[11px]">
+                <span class="text-stone-300 font-mono font-medium" id="ownerGrossProfit">Laba: Rp 2.626.560</span>
+                <span class="text-amber-400 font-medium">HPP Stabil</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. BAR PENJUALAN PERSENTASE & WIDGET TARGET OMZET -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Category Sales Distribution Stacked Bar -->
+            <div class="lg:col-span-2 bg-stone-900 p-5 rounded-2xl border border-stone-800 space-y-4">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div>
+                  <h3 class="text-sm font-bold text-white">Distribusi Penjualan per Kategori Menu</h3>
+                  <p class="text-xs text-stone-400 mt-0.5">Persentase kontribusi omzet terhadap total penjualan kafe</p>
+                </div>
+                <span class="text-xs px-2.5 py-1 rounded-lg bg-stone-950 border border-stone-800 font-mono text-amber-400 font-bold">
+                  100% Terdistribusi
+                </span>
+              </div>
+
+              <!-- Multi-color Stacked Progress Bar -->
+              <div class="w-full h-4 rounded-full bg-stone-950 overflow-hidden flex shadow-inner border border-stone-800" id="ownerCategoryStackedBar">
+                <!-- Injected via JS -->
+              </div>
+
+              <!-- Category Legends with Nominal & Percentage -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1" id="ownerCategoryLegends">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- Target Omzet Achievement Widget -->
+            <div class="bg-stone-900 p-5 rounded-2xl border border-stone-800 flex flex-col justify-between space-y-4">
+              <div>
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-bold text-white">Target Omzet Periode</h3>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-600/15 border border-amber-600/30 text-amber-300 font-mono font-bold" id="ownerTargetBadge">
+                    ON TRACK
+                  </span>
+                </div>
+                <p class="text-xs text-stone-400 mt-0.5" id="ownerTargetText">Target: <strong class="text-white font-mono">Rp 5.000.000</strong></p>
+              </div>
+
+              <div class="space-y-2">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-stone-400">Tercapai: <strong class="text-amber-400 font-bold" id="ownerTargetAchievedNominal">Rp 3.840.000</strong></span>
+                  <span class="text-amber-300 font-bold" id="ownerTargetAchievedPct">77%</span>
+                </div>
+                <div class="w-full h-3 rounded-full bg-stone-950 overflow-hidden border border-stone-800">
+                  <div
+                    id="ownerTargetProgressBar"
+                    style="width: 77%"
+                    class="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-500 shadow-[0_0_12px_rgba(52,211,153,0.5)]"
+                  ></div>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-stone-950/80 border border-stone-800 text-[11px] text-stone-300 flex items-center justify-between">
+                <span>Sisa ke Target:</span>
+                <span class="font-mono font-bold text-amber-400" id="ownerTargetRemaining">Rp 1.160.000</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. GRAFIK DISTRIBUSI PENJUALAN JAM OPERASIONAL & TOP 5 MENU TERLARIS -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Hourly Sales Visual Bars with Peak Hours Highlight -->
+            <div class="lg:col-span-2 bg-stone-900 p-5 rounded-2xl border border-stone-800 space-y-4">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div>
+                  <h3 class="text-sm font-bold text-white">Distribusi Penjualan Jam Operasional Kafe</h3>
+                  <p class="text-xs text-stone-400">
+                    Visualisasi jam sibuk (Peak Hours): <span class="text-amber-400 font-semibold">12:00–14:00 (Lunch)</span> &amp; <span class="text-amber-400 font-semibold">19:00–21:00 (Dinner)</span>
+                  </p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="flex items-center gap-1 text-[11px] text-amber-400 font-mono">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Normal
+                  </span>
+                  <span class="flex items-center gap-1 text-[11px] text-amber-400 font-mono">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span> Peak Hour
+                  </span>
+                </div>
+              </div>
+
+              <!-- Bar Chart Visual Responsive -->
+              <div class="pt-6 flex items-end justify-between gap-2 sm:gap-3 h-48 border-b border-stone-800 pb-2" id="ownerHourlyBarsContainer">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- Top 5 Best Sellers Card -->
+            <div class="bg-stone-900 p-5 rounded-2xl border border-stone-800 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white">Top 5 Menu Terlaris</h3>
+                <span class="text-[10px] text-amber-400 font-semibold uppercase px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30">
+                  Paling Diminati
+                </span>
+              </div>
+
+              <div class="space-y-2.5 text-xs" id="ownerTopSellersList">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="ownerSectionMenu" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 hidden">
+          <div class="flex justify-between items-center bg-stone-900 p-3.5 rounded-2xl border border-stone-800">
+            <span class="text-xs text-stone-300 font-semibold">Ubah Harga Langsung & Status Ketersediaan Stok Menu</span>
+            <button onclick="openModal('addMenuModal')" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i> Tambah Menu Baru
+            </button>
+          </div>
+          <div class="bg-stone-900 rounded-2xl border border-stone-800 overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-stone-950/80 border-b border-stone-800 text-[10px] text-stone-400 uppercase">
+                <tr>
+                  <th class="p-3">Nama Menu & SKU</th>
+                  <th class="p-3">Kategori</th>
+                  <th class="p-3">Harga Jual Kasir</th>
+                  <th class="p-3">HPP Modal</th>
+                  <th class="p-3">Stok</th>
+                  <th class="p-3">Status Stok</th>
+                  <th class="p-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-stone-800" id="ownerMenuTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="ownerSectionAudit" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 hidden">
+          <div class="bg-stone-900 rounded-2xl border border-stone-800 overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-stone-950/80 border-b border-stone-800 text-[10px] text-stone-400 uppercase">
+                <tr>
+                  <th class="p-3">No. Struk</th>
+                  <th class="p-3">Waktu</th>
+                  <th class="p-3">Kasir</th>
+                  <th class="p-3">Pelanggan</th>
+                  <th class="p-3">Metode Bayar</th>
+                  <th class="p-3 text-right">Total Tagihan</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-stone-800" id="ownerAuditTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. CASHIER VIEW -->
+      <section id="cashierView" class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+        <!-- Mobile Tab Switcher (< md) -->
+        <div class="flex md:hidden bg-stone-900 border-b border-stone-800 p-1.5 gap-1.5 shrink-0 z-10 w-full select-none">
+          <button id="mobileTabCatalogBtn" onclick="setMobilePosTab('catalog')" class="flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all bg-amber-600 text-stone-950 shadow">
+            <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+            <span>Katalog Menu</span>
+          </button>
+          <button id="mobileTabCartBtn" onclick="setMobilePosTab('cart')" class="flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all text-stone-400 hover:text-stone-200">
+            <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+            <span>Keranjang Tagihan</span>
+            <span id="mobileCartBadge" class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-stone-800 text-stone-300">0</span>
+          </button>
+        </div>
+
+        <!-- Left Column: Catalog Panel -->
+        <div id="cashierCatalogPanel" class="flex-1 flex flex-col h-full bg-stone-950 overflow-hidden">
+          <div class="p-3.5 bg-stone-900/90 border-b border-stone-800 flex items-center gap-3 shrink-0">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"></i>
+              <input type="text" id="searchInput" oninput="filterCatalog()" placeholder="Cari menu kafe atau ketik SKU (cth: RDX-ESP-001)..." class="w-full bg-stone-950 border border-stone-800 rounded-lg pl-10 pr-4 py-2 text-sm text-amber-50 placeholder-stone-500 focus:outline-none focus:border-amber-600">
+            </div>
+            <button onclick="openModal('scannerModal')" class="px-3.5 py-2 bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded-lg text-stone-200 text-xs font-medium flex items-center gap-2 shrink-0">
+              <i data-lucide="scan-barcode" class="w-4 h-4 text-amber-400"></i>
+              <span class="hidden sm:inline">Scan SKU</span>
+            </button>
+          </div>
+
+          <div class="px-3.5 py-2.5 bg-stone-900/60 border-b border-stone-800/80 overflow-x-auto no-scrollbar shrink-0 flex items-center gap-1.5" id="categoryTabs"></div>
+
+          <div class="flex-1 overflow-y-auto p-4 pb-24 md:pb-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3.5" id="catalogGrid"></div>
+          </div>
+
+          <div class="px-4 py-2 bg-stone-900 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400 shrink-0">
+            <div id="catalogFooterCount">Menampilkan 10 menu</div>
+            <div class="text-[11px] text-stone-500">Klik kartu untuk tambah / kustomisasi varian</div>
+          </div>
+        </div>
+
+        <!-- Right Column: Cart Panel -->
+        <aside id="cashierCartAside" class="w-full md:w-[380px] lg:w-[420px] xl:w-[460px] h-full hidden md:flex flex-col bg-stone-900 border-l border-stone-800 shrink-0 select-none">
+          <!-- Mobile Return to Catalog Button (< md) -->
+          <div class="p-2.5 bg-stone-950 border-b border-stone-800 flex items-center justify-between md:hidden shrink-0">
+            <button onclick="setMobilePosTab('catalog')" class="px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-300 text-xs font-semibold flex items-center gap-1.5 border border-stone-700">
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Kembali ke Katalog</span>
+            </button>
+            <span class="text-xs font-mono font-bold text-amber-400" id="mobileCartItemSummary">0 Item</span>
+          </div>
+          <div class="p-3 bg-stone-900/90 border-b border-stone-800 flex flex-col gap-2 shrink-0">
+            <div class="grid grid-cols-3 gap-1 bg-stone-950 p-1 rounded-xl border border-stone-800">
+              <button id="typeDineIn" onclick="setOrderType('dine_in')" class="py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 bg-amber-600/20 text-amber-300 border border-amber-600/40">
+                <i data-lucide="utensils" class="w-3.5 h-3.5"></i> Dine-In
+              </button>
+              <button id="typeTakeaway" onclick="setOrderType('takeaway')" class="py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 text-stone-400 hover:text-stone-200">
+                <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i> Takeaway
+              </button>
+              <button id="typeDelivery" onclick="setOrderType('delivery')" class="py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 text-stone-400 hover:text-stone-200">
+                <i data-lucide="truck" class="w-3.5 h-3.5"></i> Delivery
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <div id="tableInputWrapper" class="flex-1 flex items-center gap-1 bg-stone-950 px-2.5 py-1.5 rounded-lg border border-stone-800">
+                <i data-lucide="hash" class="w-3.5 h-3.5 text-stone-500"></i>
+                <input type="text" id="tableNoInput" value="04" placeholder="No. Meja" class="w-full bg-transparent text-xs text-stone-200 focus:outline-none font-mono">
+                <button onclick="openModal('tableModal')" class="text-[11px] text-amber-400 font-medium px-1.5 py-0.5 rounded bg-amber-950/60 border border-amber-600/30">Peta</button>
+              </div>
+              <div class="flex-1 flex items-center gap-1.5 bg-stone-950 px-2.5 py-1.5 rounded-lg border border-stone-800">
+                <i data-lucide="user" class="w-3.5 h-3.5 text-stone-500"></i>
+                <input type="text" id="customerNameInput" value="Bpk. Arya" placeholder="Nama Tamu" class="w-full bg-transparent text-xs text-stone-200 focus:outline-none">
+              </div>
+              <button onclick="clearCart()" class="p-1.5 text-stone-500 hover:text-rose-400 rounded-lg" title="Kosongkan Keranjang">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex-1 overflow-y-auto p-3 space-y-2" id="cartItemList"></div>
+
+          <div class="p-3.5 bg-stone-950 border-t border-stone-800 flex flex-col gap-2 shrink-0">
+            <div class="flex items-center justify-between text-xs text-stone-400">
+              <span>Subtotal</span>
+              <span class="font-mono text-stone-200 tabular-nums" id="calcSubtotal">Rp 0</span>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-amber-400">
+              <span class="flex items-center gap-1 cursor-pointer" onclick="toggleDiscount()">
+                <i data-lucide="tag" class="w-3 h-3"></i>
+                <span id="discountLabel">Diskon: Member (10%)</span>
+              </span>
+              <span class="font-mono tabular-nums" id="calcDiscount">-Rp 0</span>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-stone-400">
+              <span>PB1 Restoran (10%)</span>
+              <span class="font-mono text-stone-300 tabular-nums" id="calcTax">Rp 0</span>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-stone-400">
+              <span>Service Charge (5%)</span>
+              <span class="font-mono text-stone-300 tabular-nums" id="calcService">Rp 0</span>
+            </div>
+
+            <div class="pt-2 border-t border-stone-800 flex items-center justify-between">
+              <div>
+                <span class="text-xs uppercase tracking-wider font-semibold text-stone-400 block">Grand Total</span>
+                <span class="text-[10px] text-amber-400">Termasuk PB1 & Service</span>
+              </div>
+              <span class="text-2xl font-black font-mono text-amber-400 tabular-nums" id="calcGrandTotal">Rp 0</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-1.5 pt-1">
+              <button onclick="openModal('splitModal')" class="px-2 py-2 bg-stone-800 hover:bg-stone-700 text-xs font-medium text-stone-200 rounded-lg border border-stone-700 flex items-center justify-center gap-1">
+                <i data-lucide="split" class="w-3.5 h-3.5 text-cyan-400"></i> Split Bill
+              </button>
+              <button onclick="holdActiveOrder()" class="px-2 py-2 bg-stone-800 hover:bg-stone-700 text-xs font-medium text-stone-200 rounded-lg border border-stone-700 flex items-center justify-center gap-1">
+                <i data-lucide="bookmark" class="w-3.5 h-3.5 text-amber-400"></i> Hold Bill
+              </button>
+              <button onclick="printKitchenTicketDirect()" class="px-2 py-2 bg-stone-800 hover:bg-stone-700 text-xs font-medium text-stone-200 rounded-lg border border-stone-700 flex items-center justify-center gap-1">
+                <i data-lucide="chef-hat" class="w-3.5 h-3.5 text-indigo-400"></i> Dapur
+              </button>
+            </div>
+
+            <button onclick="openModal('paymentModal')" class="w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-amber-950/40 flex items-center justify-between active:scale-[0.99]">
+              <div class="flex items-center gap-2">
+                <i data-lucide="credit-card" class="w-5 h-5"></i>
+                <span class="text-sm font-bold tracking-wide">BAYAR SEKARANG</span>
+              </div>
+              <span class="text-base font-extrabold font-mono tabular-nums" id="btnPayTotal">Rp 0</span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- Floating Mobile Cart Bar (< md) -->
+        <div id="mobileFloatingCartBar" onclick="setMobilePosTab('cart')" class="fixed bottom-3 left-3 right-3 md:hidden bg-gradient-to-r from-amber-600 to-amber-500 text-stone-950 font-bold p-3 rounded-2xl shadow-2xl flex items-center justify-between z-30 cursor-pointer active:scale-95 transition-all border border-amber-400/40 hidden">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-stone-950 text-amber-400 flex items-center justify-center font-mono text-xs font-black shadow-inner">
+              <span id="mobileFloatingItemCount">0</span>
+            </div>
+            <div class="text-left leading-tight">
+              <span class="text-[10px] text-stone-900 font-semibold block uppercase tracking-wider">Total Tagihan</span>
+              <span class="text-sm font-black font-mono" id="mobileFloatingTotal">Rp 0</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 text-xs font-black bg-stone-950/20 px-3 py-1.5 rounded-xl">
+            <span>Buka Keranjang</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. KITCHEN KDS VIEW -->
+      <section id="kitchenView" class="flex-1 flex flex-col overflow-hidden hidden bg-stone-950">
+        <div class="p-3.5 bg-stone-900 border-b border-stone-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div class="flex items-center gap-1.5 bg-stone-950 p-1 rounded-xl border border-stone-800">
+            <button onclick="setKdsFilter('all')" id="kdsFilterAll" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-stone-800 text-white shadow-sm">Semua Antrean</button>
+            <button onclick="setKdsFilter('pending')" id="kdsFilterPending" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-white">Pesanan Baru</button>
+            <button onclick="setKdsFilter('cooking')" id="kdsFilterCooking" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-white">Sedang Dimasak</button>
+            <button onclick="setKdsFilter('ready')" id="kdsFilterReady" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-white">Siap Saji</button>
+          </div>
+          <div class="flex items-center gap-3 text-xs">
+            <span class="text-stone-400 font-mono text-[11px]">Warna Waktu: <strong class="text-amber-400">&lt;5m Normal</strong> · <strong class="text-amber-400">5-10m Sedang</strong> · <strong class="text-rose-400">&gt;10m Kritis</strong></span>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="kdsTicketsGrid"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 3. MODALS CONTAINER                        -->
+  <!-- ========================================== -->
+  <div id="modalOverlay" class="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <!-- MODAL: LOG OUT CONFIRM -->
+    <div id="logoutModal" class="bg-stone-900 border border-stone-700/80 rounded-2xl w-full max-w-sm flex flex-col shadow-2xl overflow-hidden hidden">
+      <div class="p-4 bg-stone-900 border-b border-stone-800 flex items-center justify-between">
+        <div class="flex items-center gap-2 text-rose-400 font-bold text-sm">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          <span>Konfirmasi Keluar Akun</span>
+        </div>
+        <button onclick="closeModal()" class="text-stone-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-5 text-center space-y-2">
+        <div class="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto mb-1">
+          <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+        </div>
+        <h4 class="text-sm font-bold text-white">Keluar dari Sesi POS?</h4>
+        <p class="text-xs text-stone-400">Sistem akan mengakhiri sesi aktif dan mengunci kembali antarmuka ke Laman Login Utama.</p>
+      </div>
+      <div class="p-3.5 bg-stone-950 border-t border-stone-800 flex justify-end gap-2">
+        <button onclick="closeModal()" class="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold">Batal</button>
+        <button onclick="performLogout()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold shadow-md">Keluar Akun</button>
+      </div>
+    </div>
+
+    <!-- MODAL: VARIANT MODIFIER -->
+    <div id="variantModal" class="bg-stone-900 border border-stone-700/80 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden hidden">
+      <div class="p-4 bg-stone-900/90 border-b border-stone-800 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-white" id="varModalTitle">Ridex Signature Latte</h3>
+          <p class="text-xs text-stone-400">Pilihan Varian & Kustomisasi Rasa</p>
+        </div>
+        <button onclick="closeModal()" class="text-stone-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+        <div>
+          <label class="font-semibold text-stone-300 block mb-1.5 uppercase tracking-wider">1. Pilihan Ukuran</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="setVarSize('Regular', 0)" id="sizeRegBtn" class="p-2.5 rounded-xl border border-amber-600/60 bg-amber-600/15 text-white flex justify-between">
+              <span>Regular (12 oz)</span><span class="font-mono text-amber-400">+Rp 0</span>
+            </button>
+            <button onclick="setVarSize('Large', 6000)" id="sizeLrgBtn" class="p-2.5 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 flex justify-between">
+              <span>Large (16 oz)</span><span class="font-mono text-amber-400">+Rp 6.000</span>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-stone-300 block mb-1.5 uppercase tracking-wider">2. Level Gula</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="setVarSugar('100%')" id="sugar100Btn" class="py-2 rounded-xl border border-amber-600/60 bg-amber-600/15 text-amber-300 font-semibold text-center">100% (Normal)</button>
+            <button onclick="setVarSugar('50%')" id="sugar50Btn" class="py-2 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 text-center">50% (Less)</button>
+            <button onclick="setVarSugar('0%')" id="sugar0Btn" class="py-2 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 text-center">0% (No Sugar)</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-stone-300 block mb-1.5 uppercase tracking-wider">3. Level Es</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="setVarIce('Normal')" id="iceNormBtn" class="py-2 rounded-xl border border-amber-600/60 bg-amber-600/15 text-amber-300 font-semibold text-center">Normal Ice</button>
+            <button onclick="setVarIce('Less Ice')" id="iceLessBtn" class="py-2 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 text-center">Less Ice</button>
+            <button onclick="setVarIce('No Ice')" id="iceNoBtn" class="py-2 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 text-center">No Ice</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-stone-300 block mb-1.5 uppercase tracking-wider">4. Tambahan / Add-ons</label>
+          <div class="space-y-1.5" id="extrasCheckboxes"></div>
+        </div>
+
+        <div>
+          <label class="font-semibold text-stone-300 block mb-1.5 uppercase tracking-wider">5. Catatan Barista</label>
+          <input type="text" id="varNotesInput" placeholder="Contoh: Pisahkan es, sediakan gelas terpisah..." class="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-stone-200 focus:outline-none">
+        </div>
+      </div>
+      <div class="p-4 bg-stone-900 border-t border-stone-800 flex justify-between items-center gap-3">
+        <button onclick="closeModal()" class="px-4 py-2.5 bg-stone-800 text-stone-300 rounded-xl text-xs">Batal</button>
+        <button onclick="confirmVariantAddToCart()" class="flex-1 py-3 px-4 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl text-xs sm:text-sm flex justify-between">
+          <span>Tambahkan ke Keranjang</span>
+          <span id="varModalTotalBtn" class="font-mono">Rp 38.000</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL: CHECKOUT & PAYMENT -->
+    <div id="paymentModal" class="bg-stone-900 border border-stone-700/80 rounded-2xl w-full max-w-xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden hidden">
+      <div class="p-4 bg-stone-900/90 border-b border-stone-800 flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="credit-card" class="w-4 h-4 text-amber-400"></i> Pembayaran & Kasir
+        </h3>
+        <button onclick="closeModal()" class="text-stone-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-4 bg-stone-950 border-b border-stone-800 flex justify-between items-center">
+        <div>
+          <span class="text-xs text-stone-400">Total Tagihan:</span>
+          <span class="text-2xl font-bold font-mono text-amber-400 block" id="payModalGrandTotal">Rp 0</span>
+        </div>
+        <div class="text-xs text-stone-400 font-mono">Ridex Cafe Cilacap</div>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div class="grid grid-cols-4 gap-2">
+          <button onclick="setPayMethod('cash')" id="payBtnCash" class="p-2.5 rounded-xl border border-amber-600/60 bg-amber-600/15 text-amber-300 font-bold text-xs flex flex-col items-center gap-1">
+            <i data-lucide="banknote" class="w-4 h-4"></i> Tunai
+          </button>
+          <button onclick="setPayMethod('qris')" id="payBtnQris" class="p-2.5 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 text-xs flex flex-col items-center gap-1">
+            <i data-lucide="qr-code" class="w-4 h-4 text-cyan-400"></i> QRIS
+          </button>
+          <button onclick="setPayMethod('card')" id="payBtnCard" class="p-2.5 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 text-xs flex flex-col items-center gap-1">
+            <i data-lucide="credit-card" class="w-4 h-4 text-indigo-400"></i> Kartu
+          </button>
+          <button onclick="setPayMethod('ewallet')" id="payBtnEwallet" class="p-2.5 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 text-xs flex flex-col items-center gap-1">
+            <i data-lucide="wallet" class="w-4 h-4 text-amber-400"></i> E-Wallet
+          </button>
+        </div>
+
+        <div id="cashSection" class="bg-stone-950 p-3.5 rounded-xl border border-stone-800 space-y-3">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-semibold text-stone-300">Uang Diterima:</span>
+            <input type="number" id="cashInput" oninput="updateChange()" class="w-36 bg-stone-900 border border-stone-700 rounded-lg px-2.5 py-1 text-right font-mono font-bold text-white text-sm focus:outline-none">
+          </div>
+          <div class="grid grid-cols-4 gap-1.5 text-xs">
+            <button onclick="quickCash('exact')" class="py-1.5 bg-stone-900 hover:bg-stone-800 text-amber-400 font-semibold rounded border border-stone-700">Pas</button>
+            <button onclick="quickCash(50000)" class="py-1.5 bg-stone-900 hover:bg-stone-800 text-stone-200 font-mono rounded border border-stone-700">50k</button>
+            <button onclick="quickCash(100000)" class="py-1.5 bg-stone-900 hover:bg-stone-800 text-stone-200 font-mono rounded border border-stone-700">100k</button>
+            <button onclick="quickCash(200000)" class="py-1.5 bg-stone-900 hover:bg-stone-800 text-stone-200 font-mono rounded border border-stone-700">200k</button>
+          </div>
+          <div class="pt-2 border-t border-stone-800 flex justify-between items-center">
+            <span class="text-xs text-stone-300">Kembalian:</span>
+            <span class="text-lg font-bold font-mono text-amber-400" id="cashChangeDisplay">Rp 0</span>
+          </div>
+        </div>
+
+        <div id="qrisSection" class="bg-stone-950 p-4 rounded-xl border border-stone-800 hidden flex items-center gap-4">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=RIDEX_CAFE_CILACAP_QRIS" class="w-24 h-24 bg-white p-1.5 rounded-lg" alt="QRIS">
+          <div class="text-xs space-y-1">
+            <span class="bg-rose-600 text-white font-bold px-1.5 py-0.5 rounded text-[10px]">QRIS</span>
+            <span class="font-bold text-stone-200 block">RIDEX CAFE CILACAP</span>
+            <span class="text-[10px] text-stone-400 font-mono">NMID: ID1020268884920</span>
+            <p class="text-stone-400 text-[11px]">Dapat dipindai dari BCA, Mandiri, GoPay, OVO, ShopeePay.</p>
+          </div>
+        </div>
+      </div>
+      <div class="p-4 bg-stone-900 border-t border-stone-800 flex justify-end gap-2">
+        <button onclick="closeModal()" class="px-4 py-2 bg-stone-800 text-stone-300 rounded-lg text-xs">Batal</button>
+        <button onclick="completePaymentTransaction()" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5">
+          <i data-lucide="receipt" class="w-4 h-4"></i> Selesaikan Transaksi (Otomatis ke KDS)
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL: RECEIPT PREVIEW (Strict Single Parent White Thermal Paper) -->
+    <div id="receiptModal" class="bg-stone-900 border border-stone-700/80 rounded-2xl w-full max-w-md max-h-[95vh] flex flex-col shadow-2xl overflow-hidden hidden">
+      <div class="p-3 bg-stone-900 border-b border-stone-800 flex justify-between items-center text-xs">
+        <span class="font-bold text-stone-200 flex items-center gap-2">
+          <i data-lucide="receipt" class="w-4 h-4 text-amber-400"></i> Struk Belanja Kasir Ridex Cafe
+        </span>
+        <button onclick="closeModal()" class="text-stone-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-4 bg-stone-950 flex justify-center overflow-hidden">
+        <!-- SINGLE PARENT WHITE DIV (100% Uniform White Background) -->
+        <div id="receiptContent" class="bg-white text-slate-900 font-mono p-6 rounded-md shadow-2xl w-full max-w-sm mx-auto max-h-[75vh] overflow-y-auto space-y-3 text-xs select-text"></div>
+      </div>
+      <div class="p-3 bg-stone-900 border-t border-stone-800 flex justify-between gap-2 shrink-0">
+        <button onclick="window.print()" class="px-4 py-2.5 bg-stone-800 hover:bg-stone-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all">
+          <i data-lucide="printer" class="w-4 h-4 text-amber-400"></i> Cetak Struk Fisik
+        </button>
+        <button onclick="newTransactionFromReceipt()" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md">
+          Transaksi Baru
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL: REKAP SHIFT -->
+    <div id="shiftModal" class="bg-stone-900 border border-stone-700/80 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden hidden">
+      <div class="p-4 bg-stone-900/90 border-b border-stone-800 flex justify-between items-center">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="bar-chart-3" class="w-4 h-4 text-amber-400"></i> Rekap Shift Kasir Ridex
+        </h3>
+        <button onclick="closeModal()" class="text-stone-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-4 overflow-y-auto space-y-4 text-xs">
+        <div class="bg-stone-950 p-4 rounded-xl border border-amber-600/30">
+          <span class="text-stone-400 block">Total Uang Fisik Seharusnya di Laci:</span>
+          <span class="text-2xl font-bold font-mono text-amber-400" id="shiftDrawerDisplay">Rp 600.000</span>
+          <p class="text-[10px] text-stone-500 mt-1">Modal Awal Rp 500.000 + Penjualan Tunai + Cash In</p>
+        </div>
+      </div>
+      <div class="p-3 bg-stone-900 border-t border-stone-800 flex justify-end">
+        <button onclick="closeModal()" class="px-4 py-2 bg-stone-800 text-stone-300 rounded-lg text-xs">Tutup</button>
+      </div>
+    </div>
+
+    <!-- MODAL: PETA MEJA -->
+    <div id="tableModal" class="bg-stone-900 border border-stone-700/80 rounded-2xl w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden hidden">
+      <div class="p-4 bg-stone-900/90 border-b border-stone-800 flex justify-between items-center">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="layout-grid" class="w-4 h-4 text-cyan-400"></i> Peta Meja & Reservasi
+        </h3>
+        <button onclick="closeModal()" class="text-stone-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-4 overflow-y-auto grid grid-cols-3 gap-2.5 text-xs" id="tablesContainer"></div>
+      <div class="p-3 bg-stone-900 border-t border-stone-800 flex justify-end">
+        <button onclick="closeModal()" class="px-4 py-2 bg-stone-800 text-stone-300 rounded-lg text-xs">Tutup</button>
+      </div>
+    </div>
+
+    <!-- MODAL: HOLD ORDER -->
+    <div id="holdModal" class="bg-stone-900 border border-stone-700/80 rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl overflow-hidden hidden">
+      <div class="p-4 bg-stone-900/90 border-b border-stone-800 flex justify-between items-center">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="bookmark" class="w-4 h-4 text-amber-400"></i> Daftar Hold Order
+        </h3>
+        <button onclick="closeModal()" class="text-stone-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-4 overflow-y-auto space-y-2 text-xs" id="holdOrdersList"></div>
+      <div class="p-3 bg-stone-900 border-t border-stone-800 flex justify-end">
+        <button onclick="closeModal()" class="px-4 py-2 bg-stone-800 text-stone-300 rounded-lg text-xs">Tutup</button>
+      </div>
+    </div>
+
+    <!-- MODAL: SCANNER -->
+    <div id="scannerModal" class="bg-stone-900 border border-stone-700/80 rounded-2xl w-full max-w-sm max-h-[90vh] flex flex-col shadow-2xl overflow-hidden hidden">
+      <div class="p-4 bg-stone-900/90 border-b border-stone-800 flex justify-between items-center">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="scan-barcode" class="w-4 h-4 text-amber-400"></i> Scanner SKU Barcode
+        </h3>
+        <button onclick="closeModal()" class="text-stone-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-4 space-y-3 text-xs">
+        <div class="h-28 bg-stone-950 border border-dashed border-amber-600/50 rounded-xl flex items-center justify-center relative">
+          <div class="w-full h-0.5 bg-rose-500 shadow-[0_0_8px_#f43f5e] animate-pulse"></div>
+        </div>
+        <div class="flex gap-2">
+          <input type="text" id="scannerInput" placeholder="Ketik SKU (cth: RDX-ESP-001)" class="flex-1 bg-stone-950 border border-stone-800 rounded-lg px-2.5 py-1.5 font-mono text-white">
+          <button onclick="scanManualSKU()" class="px-3 py-1.5 bg-emerald-500 text-slate-950 font-bold rounded-lg">Scan</button>
+        </div>
+      </div>
+      <div class="p-3 bg-stone-900 border-t border-stone-800 flex justify-end">
+        <button onclick="closeModal()" class="px-4 py-2 bg-stone-800 text-stone-300 rounded-lg text-xs">Tutup</button>
+      </div>
+    </div>
+
+    <!-- MODAL: SPLIT BILL -->
+    <div id="splitModal" class="bg-stone-900 border border-stone-700/80 rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl overflow-hidden hidden">
+      <div class="p-4 bg-stone-900/90 border-b border-stone-800 flex justify-between items-center">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="split" class="w-4 h-4 text-cyan-400"></i> Split Bill (Bagi Rata)
+        </h3>
+        <button onclick="closeModal()" class="text-stone-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-4 space-y-3 text-xs text-center">
+        <span class="text-stone-400">Bagi rata tagihan antar jumlah orang:</span>
+        <div class="flex justify-center gap-2">
+          <button onclick="splitEven(2)" class="w-10 h-10 rounded-lg bg-stone-800 hover:bg-stone-700 text-white font-bold">2</button>
+          <button onclick="splitEven(3)" class="w-10 h-10 rounded-lg bg-stone-800 hover:bg-stone-700 text-white font-bold">3</button>
+          <button onclick="splitEven(4)" class="w-10 h-10 rounded-lg bg-stone-800 hover:bg-stone-700 text-white font-bold">4</button>
+        </div>
+        <div class="p-3 bg-stone-950 rounded-xl border border-stone-800 font-mono">
+          <span class="text-stone-400 text-[11px] block">Nominal per orang:</span>
+          <span class="text-xl font-bold text-cyan-400" id="splitResultDisplay">Rp 0</span>
+        </div>
+      </div>
+      <div class="p-3 bg-stone-900 border-t border-stone-800 flex justify-end">
+        <button onclick="closeModal()" class="px-4 py-2 bg-stone-800 text-stone-300 rounded-lg text-xs">Tutup</button>
+      </div>
+    </div>
+
+    <!-- MODAL: OWNER ADD MENU -->
+    <div id="addMenuModal" class="bg-stone-900 border border-stone-700/80 rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl overflow-hidden hidden">
+      <div class="p-4 bg-stone-900/90 border-b border-stone-800 flex justify-between items-center">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="plus" class="w-4 h-4 text-amber-400"></i> Tambah Menu Baru (Owner)
+        </h3>
+        <button onclick="closeModal()" class="text-stone-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-4 space-y-3 text-xs">
+        <div>
+          <label class="text-stone-300 font-semibold block mb-1">Nama Menu:</label>
+          <input type="text" id="newMenuName" placeholder="Contoh: Caramel Latte" class="w-full bg-stone-950 border border-stone-700 rounded-lg px-3 py-2 text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-stone-300 font-semibold block mb-1">Harga Jual (Rp):</label>
+            <input type="number" id="newMenuPrice" placeholder="32000" class="w-full bg-stone-950 border border-stone-700 rounded-lg px-3 py-2 text-white font-mono">
+          </div>
+          <div>
+            <label class="text-stone-300 font-semibold block mb-1">HPP Modal (Rp):</label>
+            <input type="number" id="newMenuCost" placeholder="11000" class="w-full bg-stone-950 border border-stone-700 rounded-lg px-3 py-2 text-white font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="text-stone-300 font-semibold block mb-1">Kategori:</label>
+          <select id="newMenuCat" class="w-full bg-stone-950 border border-stone-700 rounded-lg px-3 py-2 text-white">
+            <option value="espresso">Espresso Based</option>
+            <option value="manual">Manual Brew</option>
+            <option value="tea">Tea & Non-Coffee</option>
+            <option value="bakery">Artisan Bakery</option>
+            <option value="meals">Heavy Meals</option>
+          </select>
+        </div>
+      </div>
+      <div class="p-3 bg-stone-900 border-t border-stone-800 flex justify-end gap-2">
+        <button onclick="closeModal()" class="px-4 py-2 bg-stone-800 text-stone-300 rounded-lg text-xs">Batal</button>
+        <button onclick="saveNewMenu()" class="px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-lg text-xs">Simpan Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT ENGINE -->
+  <script>
+    let audioCtx = null;
+    function playBeep(freq = 800, duration = 0.04) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function formatIDR(num) {
+      return 'Rp ' + Math.round(num || 0).toLocaleString('id-ID');
+    }
+
+    // DEMO USERS
+    const DEMO_USERS = {
+      owner: { name: 'Rifqy Ridho P. (Owner)', role: 'owner', pin: '1111', title: 'Pemilik Kafe & Manajer Operasional' },
+      cashier: { name: 'Rifqy Ridho P.', role: 'cashier', pin: '2222', title: 'Kasir Utama - Shift Pagi' },
+      kitchen: { name: 'Chef Dapur Ridex', role: 'kitchen', pin: '3333', title: 'Kepala Barista & Kitchen Leader' }
+    };
+
+    // SESSION STATE
+    let currentUser = null; // null -> Login Screen
+    let currentRole = 'cashier';
+    let currentMobilePosTab = 'catalog';
+    let currentPinInput = '';
+    let isAutoFilling = false;
+
+    // DATA STATE
+    const PRODUCTS = [
+      { id: 'p1', name: 'Ridex Signature Latte', cat: 'espresso', price: 32000, cost: 11000, stock: 45, badge: 'Tersedia', sku: 'RDX-ESP-001', hasVar: true, desc: 'Double ristretto, creamy oat milk, gula aren organik.' },
+      { id: 'p2', name: 'Americano (Hot / Iced)', cat: 'espresso', price: 24000, cost: 6500, stock: 60, badge: 'Tersedia', sku: 'RDX-ESP-002', hasVar: true, desc: '100% washed Arabica Flores clean & sweet aftertaste.' },
+      { id: 'p3', name: 'Hazelnut Macchiato', cat: 'espresso', price: 35000, cost: 12000, stock: 18, badge: 'Tersedia', sku: 'RDX-ESP-003', hasVar: true, desc: 'Steamed velvet milk dengan roasted hazelnut & espresso float.' },
+      { id: 'p4', name: 'Manual Brew V60 Flores Bajawa', cat: 'manual', price: 32000, cost: 9000, stock: 14, badge: 'Tersedia', sku: 'RDX-MBW-001', hasVar: true, desc: 'Floral jasmine aroma dengan acidity seimbang.' },
+      { id: 'p5', name: 'Artisan Matcha Latte', cat: 'tea', price: 30000, cost: 9500, stock: 32, badge: 'Tersedia', sku: 'RDX-NCO-001', hasVar: true, desc: 'Ceremonial grade Uji Matcha dipadu susu segar.' },
+      { id: 'p6', name: 'Earl Grey Milk Tea', cat: 'tea', price: 28000, cost: 8000, stock: 25, badge: 'Tersedia', sku: 'RDX-NCO-002', hasVar: true, desc: 'Teh Ceylon bergamot aromatik dengan condensed milk.' },
+      { id: 'p7', name: 'Butter Croissant', cat: 'bakery', price: 22000, cost: 7500, stock: 6, badge: 'Stok Menipis', sku: 'RDX-BKY-001', hasVar: false, desc: 'Flaky Normandy butter pastry dipanggang segar.' },
+      { id: 'p8', name: 'Nasi Goreng Ridex Special', cat: 'meals', price: 38000, cost: 14000, stock: 20, badge: 'Tersedia', sku: 'RDX-MLS-001', hasVar: true, desc: 'Nasi goreng harum rempah dengan sate ayam & telur.' },
+      { id: 'p9', name: 'Truffle Fries with Parmesan', cat: 'meals', price: 25000, cost: 8500, stock: 30, badge: 'Tersedia', sku: 'RDX-MLS-002', hasVar: false, desc: 'Kentang renyah dengan white truffle oil & parmesan.' },
+      { id: 'p10', name: 'Add Extra Espresso Shot', cat: 'extra', price: 8000, cost: 2000, stock: 99, badge: 'Tersedia', sku: 'RDX-EXT-001', hasVar: false, desc: '1 shot double espresso ekstra.' },
+    ];
+
+    const TABLES = [
+      { name: 'Meja 01', status: 'available' },
+      { name: 'Meja 02', status: 'occupied', bill: 94000 },
+      { name: 'Meja 03', status: 'available' },
+      { name: 'Meja 04', status: 'occupied', bill: 98000 },
+      { name: 'Meja 05', status: 'reserved' },
+      { name: 'Bar 01', status: 'available' },
+      { name: 'Bar 02', status: 'available' },
+      { name: 'Outdoor 01', status: 'available' },
+      { name: 'Outdoor 02', status: 'available' },
+    ];
+
+    let currentOrderType = 'dine_in';
+    let activeCategory = 'all';
+    let cart = [
+      { id: 'c1', name: 'Ridex Signature Latte', unitPrice: 38000, qty: 2, size: 'Large', sugar: '50%', ice: 'Less Ice', notes: 'Sajikan terpisah' },
+      { id: 'c2', name: 'Butter Croissant', unitPrice: 22000, qty: 1, size: 'Regular', sugar: '100%', ice: 'Normal', notes: 'Hangatkan' }
+    ];
+
+    let holdOrders = [
+      { id: 'h1', number: 'HOLD-#01', table: '02', total: 73000, itemsCount: 3 }
+    ];
+
+    let completedOrders = [
+      { number: 'RDX-2026-1042', time: '08:30 WIB', guest: 'Ibu Sarah', total: 69000, method: 'QRIS', cashier: 'Rifqy Ridho P.' },
+      { number: 'RDX-2026-1088', time: '08:45 WIB', guest: 'Reza Pratama', total: 72450, method: 'CASH', cashier: 'Rifqy Ridho P.' }
+    ];
+
+    let kitchenTickets = [
+      {
+        id: 'kt1',
+        orderNumber: 'RDX-2026-1042',
+        orderType: 'dine_in',
+        table: '02',
+        guest: 'Dimas P.',
+        time: '08:30 WIB',
+        createdAt: Date.now() - 3.5 * 60 * 1000,
+        status: 'cooking',
+        items: [
+          { name: 'Americano (Hot / Iced)', qty: 2, size: 'Regular', notes: 'Hot, ceramic cup' },
+          { name: 'Truffle Fries with Parmesan', qty: 1, size: 'Regular', notes: 'Ekstra saus sambal' }
+        ]
+      },
+      {
+        id: 'kt2',
+        orderNumber: 'RDX-2026-1088',
+        orderType: 'dine_in',
+        table: '05',
+        guest: 'Ibu Maya',
+        time: '08:38 WIB',
+        createdAt: Date.now() - 7.5 * 60 * 1000,
+        status: 'pending',
+        items: [
+          { name: 'Ridex Signature Latte', qty: 2, size: 'Large', notes: 'Less sweet, foam tebal' }
+        ]
+      }
+    ];
+
+    let drawerCash = 600000;
+    let selectedDiscountPercent = 10;
+    let activeVarProduct = null;
+    let varSize = 'Regular';
+    let varSizePrice = 0;
+    let varSugar = '100%';
+    let varIce = 'Normal';
+    let varExtras = [];
+    let payMethod = 'cash';
+    let kdsFilter = 'all';
+    let ownerActiveTab = 'analytics';
+
+    // AUTHENTICATION LOGIC
+    function pressPin(digit) {
+      if (isAutoFilling) return;
+      playBeep(750);
+      document.getElementById('loginErrorMessage').classList.add('hidden');
+      if (currentPinInput.length < 4) {
+        currentPinInput += digit;
+        updatePinDots();
+        if (currentPinInput.length === 4) {
+          setTimeout(verifyPin, 150);
+        }
+      }
+    }
+
+    function backspacePin() {
+      if (isAutoFilling) return;
+      playBeep(600);
+      currentPinInput = currentPinInput.slice(0, -1);
+      updatePinDots();
+    }
+
+    function clearPin() {
+      if (isAutoFilling) return;
+      playBeep(500);
+      currentPinInput = '';
+      updatePinDots();
+    }
+
+    function updatePinDots() {
+      for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById(`dot${i}`);
+        if (i < currentPinInput.length) {
+          dot.className = 'w-3.5 h-3.5 rounded-full bg-emerald-400 scale-110 shadow-[0_0_10px_rgba(52,211,153,0.6)] transition-all duration-150';
+        } else {
+          dot.className = 'w-3.5 h-3.5 rounded-full border-2 border-stone-700 bg-stone-950/60 transition-all duration-150';
+        }
+      }
+    }
+
+    function verifyPin() {
+      let matched = null;
+      if (currentPinInput === '1111') matched = DEMO_USERS.owner;
+      else if (currentPinInput === '2222') matched = DEMO_USERS.cashier;
+      else if (currentPinInput === '3333') matched = DEMO_USERS.kitchen;
+
+      if (matched) {
+        loginSuccess(matched);
+      } else {
+        playBeep(250, 0.15);
+        document.getElementById('loginErrorMessage').classList.remove('hidden');
+        clearPin();
+      }
+    }
+
+    function loginAsDemo(roleKey) {
+      if (isAutoFilling) return;
+      const user = DEMO_USERS[roleKey];
+      if (!user) return;
+
+      isAutoFilling = true;
+      currentPinInput = '';
+      updatePinDots();
+      document.getElementById('loginErrorMessage').classList.add('hidden');
+
+      const digits = user.pin.split('');
+      digits.forEach((digit, idx) => {
+        setTimeout(() => {
+          playBeep(750 + idx * 60, 0.04);
+          currentPinInput += digit;
+          updatePinDots();
+          if (idx === digits.length - 1) {
+            setTimeout(() => {
+              isAutoFilling = false;
+              loginSuccess(user);
+            }, 180);
+          }
+        }, (idx + 1) * 90);
+      });
+    }
+
+    function loginSuccess(user) {
+      playBeep(1100, 0.15);
+      currentUser = user;
+      currentRole = user.role;
+      currentPinInput = '';
+      updatePinDots();
+
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('mainWorkspace').classList.remove('hidden');
+
+      document.getElementById('activeUserName').innerText = user.name;
+      document.getElementById('activeUserRole').innerText = user.role.toUpperCase();
+
+      renderHeaderNav();
+      switchRole(user.role);
+    }
+
+    function performLogout() {
+      playBeep(450, 0.15);
+      currentUser = null;
+      closeModal();
+      document.getElementById('mainWorkspace').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+      clearPin();
+      lucide.createIcons();
+    }
+
+    function renderHeaderNav() {
+      const container = document.getElementById('headerCenterNav');
+      if (currentUser.role === 'owner') {
+        container.innerHTML = `
+          <button onclick="switchRole('owner')" id="roleBtnOwner" class="px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 text-amber-300 bg-amber-500/20 border border-amber-500/40">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-400"></i> Pemilik
+          </button>
+          <button onclick="switchRole('cashier')" id="roleBtnCashier" class="px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 text-stone-400 hover:text-white">
+            <i data-lucide="user-check" class="w-3.5 h-3.5 text-amber-400"></i> Kasir
+          </button>
+          <button onclick="switchRole('kitchen')" id="roleBtnKitchen" class="px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 text-stone-400 hover:text-white">
+            <i data-lucide="chef-hat" class="w-3.5 h-3.5 text-cyan-400"></i> Dapur
+          </button>
+        `;
+      } else if (currentUser.role === 'cashier') {
+        container.innerHTML = `
+          <div class="px-3 py-1.5 text-xs font-bold text-amber-300 flex items-center gap-1.5">
+            <i data-lucide="user-check" class="w-4 h-4 text-amber-400"></i> Mode Kasir Operasional
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="px-3 py-1.5 text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+            <i data-lucide="chef-hat" class="w-4 h-4 text-cyan-400"></i> Layar Dapur KDS
+          </div>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    // ROLE SWITCHER
+    function switchRole(role) {
+      currentRole = role;
+      document.getElementById('ownerView').classList.toggle('hidden', role !== 'owner');
+      document.getElementById('cashierView').classList.toggle('hidden', role !== 'cashier');
+      document.getElementById('kitchenView').classList.toggle('hidden', role !== 'kitchen');
+
+      const sub = document.getElementById('headerRoleSubtitle');
+      const shortcuts = document.getElementById('cashierShortcuts');
+
+      if (role === 'owner') {
+        sub.innerHTML = '<span class="text-amber-400 font-medium">Mode Pemilik · Akses Penuh</span>';
+        shortcuts.classList.add('hidden');
+        renderOwnerDashboard();
+      } else if (role === 'kitchen') {
+        sub.innerHTML = '<span class="text-cyan-400 font-medium">Layar Dapur KDS Aktif</span>';
+        shortcuts.classList.add('hidden');
+        renderKdsTickets();
+      } else {
+        sub.innerHTML = `<span>Shift: <strong class="text-stone-200">${currentUser?.name || 'Kasir'}</strong></span><span class="text-slate-600">·</span><span class="text-amber-400 font-mono">Laci: ${formatIDR(drawerCash)}</span>`;
+        shortcuts.classList.remove('hidden');
+        renderCart();
+      }
+
+      if (currentUser?.role === 'owner') {
+        ['owner', 'cashier', 'kitchen'].forEach(r => {
+          const btn = document.getElementById(`roleBtn${r.charAt(0).toUpperCase() + r.slice(1)}`);
+          if (btn) {
+            btn.className = r === role ? 'px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 bg-stone-800 text-white shadow-sm' : 'px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 text-stone-400 hover:text-white';
+          }
+        });
+      }
+      lucide.createIcons();
+    }
+
+    // OWNER DASHBOARD LOGIC
+    let ownerTimeRange = 'today';
+    let ownerCustomStartDate = '2026-11-01';
+    let ownerCustomEndDate = '2026-11-09';
+
+    function setOwnerTab(tab) {
+      playBeep(800);
+      ownerActiveTab = tab;
+      ['analytics', 'menu', 'audit'].forEach(t => {
+        const btn = document.getElementById(`ownerTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const sec = document.getElementById(`ownerSection${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const active = t === tab;
+        btn.className = active ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-white';
+        sec.classList.toggle('hidden', !active);
+      });
+      renderOwnerDashboard();
+    }
+
+    function setOwnerTimeRange(range) {
+      playBeep(750);
+      ownerTimeRange = range;
+      const customRow = document.getElementById('ownerCustomDateRow');
+      if (customRow) {
+        customRow.classList.toggle('hidden', range !== 'custom');
+      }
+      renderOwnerDashboard();
+    }
+
+    function applyCustomOwnerDate() {
+      playBeep(950, 0.08);
+      const s = document.getElementById('ownerCustomStartDate')?.value || '2026-11-01';
+      const e = document.getElementById('ownerCustomEndDate')?.value || '2026-11-09';
+      ownerCustomStartDate = s;
+      ownerCustomEndDate = e;
+      ownerTimeRange = 'custom';
+      renderOwnerDashboard();
+    }
+
+    function getOwnerAnalyticsDataset() {
+      const liveOrdersRev = completedOrders.reduce((s, o) => s + o.total, 0);
+      const liveOrdersCnt = completedOrders.length;
+      const baseTodayRev = 3840000 + liveOrdersRev;
+      const baseTodayOrders = 52 + liveOrdersCnt;
+      const baseTodayAvg = Math.round(baseTodayRev / baseTodayOrders);
+      const todayTarget = 5000000;
+      const todayTargetPct = Math.min(100, Math.round((baseTodayRev / todayTarget) * 100));
+
+      if (ownerTimeRange === 'yesterday') {
+        return {
+          label: 'Kemarin (08 Nov 2026)',
+          revenue: 3360000,
+          revenueBadge: { text: '▼ -4.5% vs 2 hari lalu', isPos: false },
+          orders: 48,
+          ordersBadge: { text: '▼ -2.0% vs 2 hari lalu', isPos: false },
+          avgTicket: 70000,
+          avgTicketBadge: { text: '▼ -2.5% vs 2 hari lalu', isPos: false },
+          marginPct: '67.8%',
+          grossProfit: 2278080,
+          targetRev: 4500000,
+          targetAchievedPct: 75,
+          itemsSold: 104,
+          categories: [
+            { id: 'espresso', label: 'Espresso & Coffee', pct: 42, amount: 1411200, color: 'bg-emerald-500', textCol: 'text-amber-400' },
+            { id: 'meals', label: 'Heavy Meals / Food', pct: 31, amount: 1041600, color: 'bg-amber-500', textCol: 'text-amber-400' },
+            { id: 'non_coffee', label: 'Non-Coffee & Tea', pct: 15, amount: 504000, color: 'bg-cyan-500', textCol: 'text-cyan-400' },
+            { id: 'bakery', label: 'Artisan Pastry', pct: 12, amount: 403200, color: 'bg-purple-500', textCol: 'text-purple-400' },
+          ],
+          peakHours: [
+            { hour: '08:00', h: '28%', val: 'Rp 180k' },
+            { hour: '10:00', h: '52%', val: 'Rp 340k' },
+            { hour: '12:00', h: '90%', val: 'Rp 590k', isPeak: true, label: 'Peak Siang' },
+            { hour: '14:00', h: '64%', val: 'Rp 420k' },
+            { hour: '16:00', h: '48%', val: 'Rp 310k' },
+            { hour: '18:00', h: '68%', val: 'Rp 440k' },
+            { hour: '20:00', h: '86%', val: 'Rp 560k', isPeak: true, label: 'Peak Malam' },
+            { hour: '22:00', h: '34%', val: 'Rp 220k' },
+          ],
+          topItems: [
+            { name: 'Ridex Signature Latte', qty: 38, revenue: 1216000, share: '36.2%' },
+            { name: 'Nasi Goreng Ridex Special', qty: 24, revenue: 912000, share: '27.1%' },
+            { name: 'Americano (Hot / Iced)', qty: 22, revenue: 528000, share: '15.7%' },
+            { name: 'Artisan Matcha Latte', qty: 15, revenue: 450000, share: '13.4%' },
+            { name: 'Butter Croissant', qty: 11, revenue: 242000, share: '7.2%' },
+          ]
+        };
+      } else if (ownerTimeRange === 'this_week') {
+        return {
+          label: 'Minggu Ini (03 - 09 Nov 2026)',
+          revenue: 24850000,
+          revenueBadge: { text: '▲ +18.6% dibanding minggu lalu', isPos: true },
+          orders: 345,
+          ordersBadge: { text: '▲ +12.4% vs minggu lalu', isPos: true },
+          avgTicket: 72028,
+          avgTicketBadge: { text: '▲ +5.5% vs minggu lalu', isPos: true },
+          marginPct: '68.9%',
+          grossProfit: 17121650,
+          targetRev: 30000000,
+          targetAchievedPct: 83,
+          itemsSold: 780,
+          categories: [
+            { id: 'espresso', label: 'Espresso & Coffee', pct: 46, amount: 11431000, color: 'bg-emerald-500', textCol: 'text-amber-400' },
+            { id: 'meals', label: 'Heavy Meals / Food', pct: 27, amount: 6709500, color: 'bg-amber-500', textCol: 'text-amber-400' },
+            { id: 'non_coffee', label: 'Non-Coffee & Tea', pct: 17, amount: 4224500, color: 'bg-cyan-500', textCol: 'text-cyan-400' },
+            { id: 'bakery', label: 'Artisan Pastry', pct: 10, amount: 2485000, color: 'bg-purple-500', textCol: 'text-purple-400' },
+          ],
+          peakHours: [
+            { hour: '08:00', h: '40%', val: 'Rp 1.4M' },
+            { hour: '10:00', h: '62%', val: 'Rp 2.2M' },
+            { hour: '12:00', h: '98%', val: 'Rp 4.4M', isPeak: true, label: 'Peak Siang' },
+            { hour: '14:00', h: '75%', val: 'Rp 3.2M' },
+            { hour: '16:00', h: '55%', val: 'Rp 2.4M' },
+            { hour: '18:00', h: '80%', val: 'Rp 3.5M' },
+            { hour: '20:00', h: '95%', val: 'Rp 4.2M', isPeak: true, label: 'Peak Malam' },
+            { hour: '22:00', h: '45%', val: 'Rp 1.9M' },
+          ],
+          topItems: [
+            { name: 'Ridex Signature Latte', qty: 260, revenue: 8320000, share: '33.5%' },
+            { name: 'Nasi Goreng Ridex Special', qty: 165, revenue: 6270000, share: '25.2%' },
+            { name: 'Americano (Hot / Iced)', qty: 158, revenue: 3792000, share: '15.3%' },
+            { name: 'Artisan Matcha Latte', qty: 110, revenue: 3300000, share: '13.3%' },
+            { name: 'Butter Croissant', qty: 94, revenue: 2068000, share: '8.3%' },
+          ]
+        };
+      } else if (ownerTimeRange === 'this_month') {
+        return {
+          label: 'Bulan Ini (November 2026)',
+          revenue: 98420000,
+          revenueBadge: { text: '▲ +22.4% dibanding bulan lalu', isPos: true },
+          orders: 1380,
+          ordersBadge: { text: '▲ +15.1% vs bulan lalu', isPos: true },
+          avgTicket: 71318,
+          avgTicketBadge: { text: '▲ +6.3% vs bulan lalu', isPos: true },
+          marginPct: '69.1%',
+          grossProfit: 68008220,
+          targetRev: 120000000,
+          targetAchievedPct: 82,
+          itemsSold: 3120,
+          categories: [
+            { id: 'espresso', label: 'Espresso & Coffee', pct: 45, amount: 44289000, color: 'bg-emerald-500', textCol: 'text-amber-400' },
+            { id: 'meals', label: 'Heavy Meals / Food', pct: 29, amount: 28541800, color: 'bg-amber-500', textCol: 'text-amber-400' },
+            { id: 'non_coffee', label: 'Non-Coffee & Tea', pct: 15, amount: 14763000, color: 'bg-cyan-500', textCol: 'text-cyan-400' },
+            { id: 'bakery', label: 'Artisan Pastry', pct: 11, amount: 10826200, color: 'bg-purple-500', textCol: 'text-purple-400' },
+          ],
+          peakHours: [
+            { hour: '08:00', h: '38%', val: 'Rp 6.2M' },
+            { hour: '10:00', h: '60%', val: 'Rp 9.8M' },
+            { hour: '12:00', h: '97%', val: 'Rp 18.4M', isPeak: true, label: 'Peak Siang' },
+            { hour: '14:00', h: '74%', val: 'Rp 13.9M' },
+            { hour: '16:00', h: '52%', val: 'Rp 10.2M' },
+            { hour: '18:00', h: '78%', val: 'Rp 15.1M' },
+            { hour: '20:00', h: '94%', val: 'Rp 17.8M', isPeak: true, label: 'Peak Malam' },
+            { hour: '22:00', h: '42%', val: 'Rp 7.0M' },
+          ],
+          topItems: [
+            { name: 'Ridex Signature Latte', qty: 1050, revenue: 33600000, share: '34.1%' },
+            { name: 'Nasi Goreng Ridex Special', qty: 670, revenue: 25460000, share: '25.9%' },
+            { name: 'Americano (Hot / Iced)', qty: 610, revenue: 14640000, share: '14.9%' },
+            { name: 'Artisan Matcha Latte', qty: 440, revenue: 13200000, share: '13.4%' },
+            { name: 'Butter Croissant', qty: 380, revenue: 8360000, share: '8.5%' },
+          ]
+        };
+      } else if (ownerTimeRange === 'custom') {
+        const custRev = 26500000;
+        return {
+          label: `Rentang Kustom (${ownerCustomStartDate} s/d ${ownerCustomEndDate})`,
+          revenue: custRev,
+          revenueBadge: { text: '▲ +16.8% dibanding periode serupa', isPos: true },
+          orders: 368,
+          ordersBadge: { text: '▲ +11.2% vs periode sebelumnya', isPos: true },
+          avgTicket: 72010,
+          avgTicketBadge: { text: '▲ +5.0% vs periode sebelumnya', isPos: true },
+          marginPct: '68.6%',
+          grossProfit: Math.round(custRev * 0.686),
+          targetRev: 32000000,
+          targetAchievedPct: 83,
+          itemsSold: 832,
+          categories: [
+            { id: 'espresso', label: 'Espresso & Coffee', pct: 45, amount: 11925000, color: 'bg-emerald-500', textCol: 'text-amber-400' },
+            { id: 'meals', label: 'Heavy Meals / Food', pct: 28, amount: 7420000, color: 'bg-amber-500', textCol: 'text-amber-400' },
+            { id: 'non_coffee', label: 'Non-Coffee & Tea', pct: 16, amount: 4240000, color: 'bg-cyan-500', textCol: 'text-cyan-400' },
+            { id: 'bakery', label: 'Artisan Pastry', pct: 11, amount: 2915000, color: 'bg-purple-500', textCol: 'text-purple-400' },
+          ],
+          peakHours: [
+            { hour: '08:00', h: '38%', val: 'Rp 1.5M' },
+            { hour: '10:00', h: '60%', val: 'Rp 2.4M' },
+            { hour: '12:00', h: '96%', val: 'Rp 4.7M', isPeak: true, label: 'Peak Siang' },
+            { hour: '14:00', h: '73%', val: 'Rp 3.4M' },
+            { hour: '16:00', h: '53%', val: 'Rp 2.5M' },
+            { hour: '18:00', h: '79%', val: 'Rp 3.8M' },
+            { hour: '20:00', h: '93%', val: 'Rp 4.5M', isPeak: true, label: 'Peak Malam' },
+            { hour: '22:00', h: '44%', val: 'Rp 2.1M' },
+          ],
+          topItems: [
+            { name: 'Ridex Signature Latte', qty: 280, revenue: 8960000, share: '33.8%' },
+            { name: 'Nasi Goreng Ridex Special', qty: 180, revenue: 6840000, share: '25.8%' },
+            { name: 'Americano (Hot / Iced)', qty: 165, revenue: 3960000, share: '14.9%' },
+            { name: 'Artisan Matcha Latte', qty: 120, revenue: 3600000, share: '13.6%' },
+            { name: 'Butter Croissant', qty: 102, revenue: 2244000, share: '8.5%' },
+          ]
+        };
+      } else {
+        // 'today' (Live Shift)
+        return {
+          label: 'Hari Ini (Live Shift)',
+          revenue: baseTodayRev,
+          revenueBadge: { text: '▲ +14.2% dibanding periode sebelumnya', isPos: true },
+          orders: baseTodayOrders,
+          ordersBadge: { text: '▲ +8.0% vs kemarin', isPos: true },
+          avgTicket: baseTodayAvg,
+          avgTicketBadge: { text: '▲ +5.7% vs kemarin', isPos: true },
+          marginPct: '68.4%',
+          grossProfit: Math.round(baseTodayRev * 0.684),
+          targetRev: todayTarget,
+          targetAchievedPct: todayTargetPct,
+          itemsSold: 118 + (liveOrdersCnt * 2),
+          categories: [
+            { id: 'espresso', label: 'Espresso & Coffee', pct: 44, amount: Math.round(baseTodayRev * 0.44), color: 'bg-emerald-500', textCol: 'text-amber-400' },
+            { id: 'meals', label: 'Heavy Meals / Food', pct: 28, amount: Math.round(baseTodayRev * 0.28), color: 'bg-amber-500', textCol: 'text-amber-400' },
+            { id: 'non_coffee', label: 'Non-Coffee & Tea', pct: 16, amount: Math.round(baseTodayRev * 0.16), color: 'bg-cyan-500', textCol: 'text-cyan-400' },
+            { id: 'bakery', label: 'Artisan Pastry', pct: 12, amount: Math.round(baseTodayRev * 0.12), color: 'bg-purple-500', textCol: 'text-purple-400' },
+          ],
+          peakHours: [
+            { hour: '08:00', h: '35%', val: 'Rp 210k' },
+            { hour: '10:00', h: '58%', val: 'Rp 380k' },
+            { hour: '12:00', h: '96%', val: 'Rp 640k', isPeak: true, label: 'Peak Siang' },
+            { hour: '14:00', h: '72%', val: 'Rp 490k' },
+            { hour: '16:00', h: '50%', val: 'Rp 340k' },
+            { hour: '18:00', h: '74%', val: 'Rp 480k' },
+            { hour: '20:00', h: '92%', val: 'Rp 610k', isPeak: true, label: 'Peak Malam' },
+            { hour: '22:00', h: '42%', val: 'Rp 280k' },
+          ],
+          topItems: [
+            { name: 'Ridex Signature Latte', qty: 42 + liveOrdersCnt, revenue: 1344000 + (liveOrdersCnt * 32000), share: '35.0%' },
+            { name: 'Nasi Goreng Ridex Special', qty: 28, revenue: 1064000, share: '27.7%' },
+            { name: 'Americano (Hot / Iced)', qty: 26, revenue: 624000, share: '16.3%' },
+            { name: 'Artisan Matcha Latte', qty: 18, revenue: 540000, share: '14.1%' },
+            { name: 'Butter Croissant', qty: 12, revenue: 264000, share: '6.9%' },
+          ]
+        };
+      }
+    }
+
+    function renderOwnerDashboard() {
+      const data = getOwnerAnalyticsDataset();
+
+      // 1. Update Period Tabs Active State
+      ['today', 'yesterday', 'this_week', 'this_month', 'custom'].forEach(r => {
+        const btn = document.getElementById(`periodBtn_${r}`);
+        if (btn) {
+          btn.className = r === ownerTimeRange
+            ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
+            : 'px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-white';
+        }
+      });
+      const lbl = document.getElementById('ownerActivePeriodLabel');
+      if (lbl) lbl.innerText = data.label;
+
+      // 2. Update KPI Cards & Badges
+      const revEl = document.getElementById('ownerTotalRevenue');
+      if (revEl) revEl.innerText = formatIDR(data.revenue);
+
+      const revBadge = document.getElementById('ownerRevenueBadge');
+      if (revBadge) {
+        revBadge.className = `font-semibold flex items-center gap-1 ${data.revenueBadge.isPos ? 'text-amber-400' : 'text-rose-400'}`;
+        revBadge.innerHTML = `<i data-lucide="trending-up" class="w-3.5 h-3.5 ${data.revenueBadge.isPos ? '' : 'rotate-180'}"></i><span>${data.revenueBadge.text}</span>`;
+      }
+
+      const ordEl = document.getElementById('ownerTransCount');
+      if (ordEl) ordEl.innerText = `${data.orders} Struk`;
+
+      const ordBadge = document.getElementById('ownerOrdersBadge');
+      if (ordBadge) {
+        ordBadge.className = `font-semibold flex items-center gap-1 ${data.ordersBadge.isPos ? 'text-amber-400' : 'text-rose-400'}`;
+        ordBadge.innerHTML = `<i data-lucide="trending-up" class="w-3.5 h-3.5 ${data.ordersBadge.isPos ? '' : 'rotate-180'}"></i><span>${data.ordersBadge.text}</span>`;
+      }
+
+      const itemsSoldEl = document.getElementById('ownerItemsSold');
+      if (itemsSoldEl) itemsSoldEl.innerText = `${data.itemsSold} Porsi`;
+
+      const avgEl = document.getElementById('ownerAvgTicket');
+      if (avgEl) avgEl.innerText = formatIDR(data.avgTicket);
+
+      const avgBadge = document.getElementById('ownerAvgTicketBadge');
+      if (avgBadge) {
+        avgBadge.className = `font-semibold flex items-center gap-1 ${data.avgTicketBadge.isPos ? 'text-amber-400' : 'text-rose-400'}`;
+        avgBadge.innerHTML = `<i data-lucide="trending-up" class="w-3.5 h-3.5 ${data.avgTicketBadge.isPos ? '' : 'rotate-180'}"></i><span>${data.avgTicketBadge.text}</span>`;
+      }
+
+      const marginEl = document.getElementById('ownerProfitMargin');
+      if (marginEl) marginEl.innerText = data.marginPct;
+
+      const grossEl = document.getElementById('ownerGrossProfit');
+      if (grossEl) grossEl.innerText = `Laba: ${formatIDR(data.grossProfit)}`;
+
+      // 3. Update Category Stacked Bar & Legends
+      const stackedBar = document.getElementById('ownerCategoryStackedBar');
+      if (stackedBar) {
+        stackedBar.innerHTML = data.categories.map(c => `
+          <div style="width: ${c.pct}%" class="${c.color} hover:brightness-110 transition-all cursor-pointer relative" title="${c.label}: ${c.pct}% (${formatIDR(c.amount)})"></div>
+        `).join('');
+      }
+
+      const legends = document.getElementById('ownerCategoryLegends');
+      if (legends) {
+        legends.innerHTML = data.categories.map(c => `
+          <div class="p-2.5 rounded-xl bg-stone-950/70 border border-stone-800/80">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="w-2.5 h-2.5 rounded-full ${c.color}"></span>
+              <span class="text-[11px] font-semibold text-stone-300 truncate">${c.label}</span>
+            </div>
+            <div class="flex items-baseline justify-between mt-1">
+              <span class="font-mono font-bold text-sm ${c.textCol}">${c.pct}%</span>
+              <span class="text-[10px] text-stone-400 font-mono">${formatIDR(c.amount)}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // 4. Update Target Omzet Widget
+      const tgtBadge = document.getElementById('ownerTargetBadge');
+      if (tgtBadge) tgtBadge.innerText = data.targetAchievedPct >= 100 ? 'TARGET TERCAPAI' : 'ON TRACK';
+
+      const tgtText = document.getElementById('ownerTargetText');
+      if (tgtText) tgtText.innerHTML = `Target: <strong class="text-white font-mono">${formatIDR(data.targetRev)}</strong>`;
+
+      const tgtAchievedNom = document.getElementById('ownerTargetAchievedNominal');
+      if (tgtAchievedNom) tgtAchievedNom.innerText = formatIDR(data.revenue);
+
+      const tgtAchievedPct = document.getElementById('ownerTargetAchievedPct');
+      if (tgtAchievedPct) tgtAchievedPct.innerText = `${data.targetAchievedPct}%`;
+
+      const tgtProgressBar = document.getElementById('ownerTargetProgressBar');
+      if (tgtProgressBar) tgtProgressBar.style.width = `${Math.min(100, data.targetAchievedPct)}%`;
+
+      const tgtRemaining = document.getElementById('ownerTargetRemaining');
+      if (tgtRemaining) tgtRemaining.innerText = formatIDR(Math.max(0, data.targetRev - data.revenue));
+
+      // 5. Update Peak Hours Bar Chart
+      const hourlyContainer = document.getElementById('ownerHourlyBarsContainer');
+      if (hourlyContainer) {
+        hourlyContainer.innerHTML = data.peakHours.map(bar => `
+          <div class="flex-1 flex flex-col items-center gap-1.5 group relative">
+            ${bar.isPeak ? `<span class="text-[9px] font-bold text-amber-400 bg-amber-950/80 border border-amber-500/40 px-1 py-0.2 rounded absolute -top-5 whitespace-nowrap animate-pulse">${bar.label}</span>` : ''}
+            <div
+              style="height: ${bar.h}"
+              class="w-full rounded-t-lg transition-all cursor-pointer relative shadow-sm ${
+                bar.isPeak
+                  ? 'bg-gradient-to-t from-amber-600 to-amber-400 hover:from-amber-500 hover:to-amber-300'
+                  : 'bg-gradient-to-t from-emerald-600 to-emerald-400 hover:from-emerald-500 hover:to-emerald-300'
+              }"
+            >
+              <div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-stone-950 border border-stone-700 text-[10px] font-mono text-white px-2 py-0.5 rounded shadow-lg pointer-events-none whitespace-nowrap z-20 transition-opacity">
+                ${bar.val}
+              </div>
+            </div>
+            <span class="text-[10px] font-mono ${bar.isPeak ? 'text-amber-300 font-bold' : 'text-stone-400'}">${bar.hour}</span>
+          </div>
+        `).join('');
+      }
+
+      // 6. Update Top 5 Best Sellers List
+      const topList = document.getElementById('ownerTopSellersList');
+      if (topList) {
+        topList.innerHTML = data.topItems.map((item, idx) => `
+          <div class="p-2.5 rounded-xl bg-stone-950/70 border border-stone-800/80 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="w-5 h-5 rounded-full bg-stone-900 border border-stone-800 font-mono font-bold text-[10px] flex items-center justify-center text-amber-400 shrink-0">
+                ${idx + 1}
+              </span>
+              <div class="truncate">
+                <span class="font-semibold text-amber-50 block truncate">${item.name}</span>
+                <span class="text-[10px] text-stone-400 font-mono">${item.qty} Porsi Terjual</span>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="font-mono font-bold text-amber-400 block">${formatIDR(item.revenue)}</span>
+              <span class="text-[10px] text-stone-500 font-mono">${item.share}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // 7. Update Menu Table Body
+      const menuTable = document.getElementById('ownerMenuTableBody');
+      if (menuTable) {
+        menuTable.innerHTML = PRODUCTS.map(p => `
+          <tr class="hover:bg-stone-850">
+            <td class="p-3"><span class="font-bold block">${p.name}</span><span class="text-[10px] text-stone-500 font-mono">${p.sku}</span></td>
+            <td class="p-3 capitalize">${p.cat}</td>
+            <td class="p-3 font-mono font-bold text-amber-400">
+              <input type="number" value="${p.price}" onchange="ownerChangePrice('${p.id}', this.value)" class="w-24 bg-stone-950 border border-stone-700 rounded px-1.5 py-0.5 text-xs text-white">
+            </td>
+            <td class="p-3 font-mono text-stone-400">${formatIDR(p.cost)}</td>
+            <td class="p-3 font-mono">${p.stock}</td>
+            <td class="p-3">
+              <button onclick="ownerToggleStock('${p.id}')" class="px-2 py-0.5 rounded text-[11px] font-semibold border ${
+                p.badge === 'Tersedia' ? 'bg-amber-950/80 border-amber-600/40 text-amber-300' : p.badge === 'Stok Menipis' ? 'bg-amber-950/80 border-amber-500/40 text-amber-300' : 'bg-rose-950/80 border-rose-500/40 text-rose-300'
+              }">${p.badge}</button>
+            </td>
+            <td class="p-3 text-right"><span class="text-amber-400 text-xs">Aktif</span></td>
+          </tr>
+        `).join('');
+      }
+
+      // 8. Update Audit Log Table Body
+      const auditTable = document.getElementById('ownerAuditTableBody');
+      if (auditTable) {
+        auditTable.innerHTML = completedOrders.map(o => `
+          <tr class="hover:bg-stone-850">
+            <td class="p-3 font-mono font-bold text-white">${o.number}</td>
+            <td class="p-3 font-mono text-stone-400">${o.time}</td>
+            <td class="p-3">${o.cashier}</td>
+            <td class="p-3">${o.guest}</td>
+            <td class="p-3"><span class="px-2 py-0.5 bg-stone-950 rounded text-[10px] font-mono text-cyan-300">${o.method}</span></td>
+            <td class="p-3 text-right font-mono font-bold text-amber-400">${formatIDR(o.total)}</td>
+          </tr>
+        `).join('');
+      }
+
+      lucide.createIcons();
+    }
+
+    function ownerChangePrice(id, newP) {
+      playBeep(800);
+      const prod = PRODUCTS.find(p => p.id === id);
+      if (prod) prod.price = parseInt(newP, 10);
+      renderCatalog();
+    }
+
+    function ownerToggleStock(id) {
+      playBeep(700);
+      const prod = PRODUCTS.find(p => p.id === id);
+      if (prod) {
+        prod.badge = prod.badge === 'Tersedia' ? 'Stok Menipis' : prod.badge === 'Stok Menipis' ? 'Habis' : 'Tersedia';
+      }
+      renderOwnerDashboard();
+      renderCatalog();
+    }
+
+    function saveNewMenu() {
+      const name = document.getElementById('newMenuName').value.trim();
+      const price = parseInt(document.getElementById('newMenuPrice').value || '0', 10);
+      const cost = parseInt(document.getElementById('newMenuCost').value || '0', 10);
+      const cat = document.getElementById('newMenuCat').value;
+      if (!name || price <= 0) return alert('Lengkapi data menu');
+      playBeep(1000);
+      PRODUCTS.unshift({
+        id: 'p_' + Date.now(),
+        name,
+        cat,
+        price,
+        cost: cost || Math.round(price * 0.35),
+        stock: 30,
+        badge: 'Tersedia',
+        sku: 'RDX-NEW-' + Math.floor(100 + Math.random() * 900),
+        hasVar: true,
+        desc: 'Menu kreasi baru Ridex Cafe'
+      });
+      closeModal();
+      renderOwnerDashboard();
+      renderCatalog();
+    }
+
+    // KITCHEN KDS LOGIC
+    function setKdsFilter(f) {
+      playBeep(700);
+      kdsFilter = f;
+      ['all', 'pending', 'cooking', 'ready'].forEach(k => {
+        const btn = document.getElementById(`kdsFilter${k.charAt(0).toUpperCase() + k.slice(1)}`);
+        const active = k === f;
+        btn.className = active ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-stone-800 text-white shadow-sm' : 'px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-white';
+      });
+      renderKdsTickets();
+    }
+
+    function renderKdsTickets() {
+      const now = Date.now();
+      const filtered = kitchenTickets.filter(t => {
+        if (kdsFilter === 'all') return t.status !== 'completed';
+        return t.status === kdsFilter;
+      });
+
+      document.getElementById('kdsTicketsGrid').innerHTML = filtered.map(t => {
+        const elapsedMins = Math.floor((now - t.createdAt) / 60000);
+        const elapsedSecs = Math.floor(((now - t.createdAt) % 60000) / 1000);
+
+        let timeColor = 'bg-amber-950/60 border-amber-600/40 text-amber-300';
+        let cardBorder = 'border-stone-800';
+        if (elapsedMins >= 10) {
+          timeColor = 'bg-rose-950/90 border-rose-500/80 text-rose-300 animate-pulse';
+          cardBorder = 'border-rose-500/60';
+        } else if (elapsedMins >= 5) {
+          timeColor = 'bg-amber-950/80 border-amber-500/60 text-amber-300';
+          cardBorder = 'border-amber-500/40';
+        }
+
+        let actionText = t.status === 'pending' ? 'Mulai Masak' : t.status === 'cooking' ? 'Tandai Siap Saji' : 'Selesaikan';
+        let actionColor = t.status === 'pending' ? 'bg-cyan-500 text-slate-950' : t.status === 'cooking' ? 'bg-emerald-500 text-slate-950' : 'bg-stone-800 text-amber-400 border border-amber-600/40';
+
+        return `
+          <div class="bg-stone-900 rounded-2xl border ${cardBorder} shadow-lg flex flex-col justify-between overflow-hidden">
+            <div class="p-3.5 bg-stone-950 border-b border-stone-800 flex justify-between items-start">
+              <div>
+                <span class="font-mono font-bold text-white text-sm">${t.orderNumber}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase bg-stone-800 ml-1 text-stone-300">${t.orderType === 'dine_in' ? `MEJA ${t.table}` : 'TAKEAWAY'}</span>
+                <div class="text-[11px] text-stone-400 mt-0.5">${t.guest} · ${t.time}</div>
+              </div>
+              <div class="px-2 py-0.5 rounded border font-mono font-bold text-xs ${timeColor}">
+                ${elapsedMins.toString().padStart(2, '0')}:${elapsedSecs.toString().padStart(2, '0')}
+              </div>
+            </div>
+
+            <div class="p-4 space-y-2.5 flex-1">
+              ${t.items.map(item => `
+                <div class="border-b border-stone-800/80 pb-2">
+                  <div class="flex justify-between items-start">
+                    <span class="font-bold text-amber-50 text-sm"><strong class="text-amber-400 font-mono mr-1">${item.qty}x</strong> ${item.name}</span>
+                    <span class="text-[10px] bg-stone-800 px-1.5 py-0.5 rounded text-stone-300">${item.size}</span>
+                  </div>
+                  ${item.notes ? `<div class="mt-1 text-xs text-rose-300 bg-rose-950/60 p-1.5 rounded border border-rose-500/30 font-medium">Catatan: "${item.notes}"</div>` : ''}
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="p-3 bg-stone-950 border-t border-stone-800 flex justify-between items-center">
+              <span class="text-[10px] font-bold px-2 py-1 rounded bg-stone-900 uppercase ${t.status === 'pending' ? 'text-amber-400' : t.status === 'cooking' ? 'text-cyan-400' : 'text-amber-400'}">${t.status}</span>
+              <button onclick="progressKdsTicket('${t.id}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold ${actionColor}">
+                ${actionText}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function progressKdsTicket(id) {
+      playBeep(950);
+      const t = kitchenTickets.find(x => x.id === id);
+      if (!t) return;
+      if (t.status === 'pending') t.status = 'cooking';
+      else if (t.status === 'cooking') t.status = 'ready';
+      else if (t.status === 'ready') t.status = 'completed';
+      renderKdsTickets();
+    }
+
+    // CASHIER POS LOGIC
+    function init() {
+      renderCategoryTabs();
+      renderCatalog();
+      renderCart();
+      renderTables();
+      renderHoldOrders();
+      lucide.createIcons();
+    }
+
+    function renderCategoryTabs() {
+      const cats = [
+        { id: 'all', label: 'Semua Menu' },
+        { id: 'espresso', label: 'Espresso Based' },
+        { id: 'manual', label: 'Manual Brew' },
+        { id: 'tea', label: 'Tea & Non-Coffee' },
+        { id: 'bakery', label: 'Artisan Bakery' },
+        { id: 'meals', label: 'Heavy Meals' },
+        { id: 'extra', label: 'Extra & Topping' },
+      ];
+      document.getElementById('categoryTabs').innerHTML = cats.map(c => `
+        <button onclick="setCategory('${c.id}')" class="px-3 py-1.5 text-xs font-medium rounded-lg border whitespace-nowrap shrink-0 transition-all ${
+          activeCategory === c.id ? 'bg-amber-600/20 text-amber-300 border-amber-600/50' : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-white'
+        }">${c.label}</button>
+      `).join('');
+    }
+
+    function setCategory(catId) {
+      playBeep(900);
+      activeCategory = catId;
+      renderCategoryTabs();
+      renderCatalog();
+    }
+
+    function renderCatalog() {
+      const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+      const filtered = PRODUCTS.filter(p => {
+        const matchCat = activeCategory === 'all' || p.cat === activeCategory;
+        const matchQ = p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
+        return matchCat && matchQ;
+      });
+
+      document.getElementById('catalogGrid').innerHTML = filtered.map(p => `
+        <div onclick="handleProductClick('${p.id}')" class="bg-stone-900/80 hover:bg-stone-850 border border-stone-800 hover:border-amber-600/40 rounded-xl p-3 flex flex-col justify-between cursor-pointer transition-all active:scale-[0.98]">
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <span class="text-[10px] text-stone-500 font-mono">${p.sku}</span>
+              ${p.hasVar ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 border border-amber-600/40 text-amber-300">Varian</span>' : ''}
+            </div>
+            <h4 class="text-xs sm:text-sm font-semibold text-amber-50 line-clamp-1">${p.name}</h4>
+            <p class="text-[11px] text-stone-400 mt-1 line-clamp-2">${p.desc}</p>
+          </div>
+          <div class="pt-2 mt-2 border-t border-stone-800 flex justify-between items-center">
+            <span class="text-xs font-bold font-mono text-amber-400">${formatIDR(p.price)}</span>
+            <span class="text-[10px] ${p.badge === 'Habis' ? 'text-rose-400' : 'text-stone-400'}">${p.badge}</span>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('catalogFooterCount').innerText = `Menampilkan ${filtered.length} menu`;
+    }
+
+    function filterCatalog() { renderCatalog(); }
+
+    function handleProductClick(id) {
+      playBeep(650);
+      const prod = PRODUCTS.find(p => p.id === id);
+      if (!prod) return;
+      if (prod.badge === 'Habis') return alert(`Menu "${prod.name}" sedang habis.`);
+      if (prod.hasVar) openVariantModal(prod);
+      else addToCartDirect(prod);
+    }
+
+    function addToCartDirect(prod) {
+      const exist = cart.find(i => i.id === prod.id);
+      if (exist) exist.qty++;
+      else cart.push({ id: prod.id, name: prod.name, unitPrice: prod.price, qty: 1, size: 'Regular', sugar: '100%', ice: 'Normal' });
+      renderCart();
+    }
+
+    function openVariantModal(prod) {
+      activeVarProduct = prod;
+      varSize = 'Regular';
+      varSizePrice = 0;
+      varSugar = '100%';
+      varIce = 'Normal';
+      varExtras = [];
+      document.getElementById('varModalTitle').innerText = prod.name;
+      document.getElementById('varNotesInput').value = '';
+      renderExtrasCheckboxes();
+      updateVarModalTotal();
+      openModal('variantModal');
+    }
+
+    function renderExtrasCheckboxes() {
+      const extras = [
+        { name: 'Extra Double Shot', price: 8000 },
+        { name: 'Oatside Oat Milk Sub', price: 7000 },
+        { name: 'Caramel Syrup', price: 5000 }
+      ];
+      document.getElementById('extrasCheckboxes').innerHTML = extras.map(e => `
+        <label class="p-2 rounded-lg bg-stone-950 border border-stone-800 flex justify-between items-center cursor-pointer">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" onchange="toggleExtra('${e.name}', ${e.price})" class="accent-emerald-500">
+            <span>${e.name}</span>
+          </div>
+          <span class="font-mono text-amber-400">+${formatIDR(e.price)}</span>
+        </label>
+      `).join('');
+    }
+
+    function toggleExtra(name, price) {
+      playBeep(700);
+      const idx = varExtras.findIndex(e => e.name === name);
+      if (idx >= 0) varExtras.splice(idx, 1);
+      else varExtras.push({ name, price });
+      updateVarModalTotal();
+    }
+
+    function setVarSize(size, delta) {
+      playBeep(750);
+      varSize = size;
+      varSizePrice = delta;
+      document.getElementById('sizeRegBtn').className = size === 'Regular' ? 'p-2.5 rounded-xl border border-amber-600/60 bg-amber-600/15 text-white flex justify-between' : 'p-2.5 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 flex justify-between';
+      document.getElementById('sizeLrgBtn').className = size === 'Large' ? 'p-2.5 rounded-xl border border-amber-600/60 bg-amber-600/15 text-white flex justify-between' : 'p-2.5 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 flex justify-between';
+      updateVarModalTotal();
+    }
+
+    function setVarSugar(level) {
+      playBeep(750);
+      varSugar = level;
+      ['100', '50', '0'].forEach(l => {
+        document.getElementById(`sugar${l}Btn`).className = (level.includes(l)) ? 'py-2 rounded-xl border border-amber-600/60 bg-amber-600/15 text-amber-300 font-semibold text-center' : 'py-2 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 text-center';
+      });
+    }
+
+    function setVarIce(ice) {
+      playBeep(750);
+      varIce = ice;
+      document.getElementById('iceNormBtn').className = ice === 'Normal' ? 'py-2 rounded-xl border border-amber-600/60 bg-amber-600/15 text-amber-300 font-semibold text-center' : 'py-2 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 text-center';
+      document.getElementById('iceLessBtn').className = ice === 'Less Ice' ? 'py-2 rounded-xl border border-amber-600/60 bg-amber-600/15 text-amber-300 font-semibold text-center' : 'py-2 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 text-center';
+      document.getElementById('iceNoBtn').className = ice === 'No Ice' ? 'py-2 rounded-xl border border-amber-600/60 bg-amber-600/15 text-amber-300 font-semibold text-center' : 'py-2 rounded-xl border border-stone-800 bg-stone-950 text-stone-400 text-center';
+    }
+
+    function updateVarModalTotal() {
+      if (!activeVarProduct) return;
+      const extrasSum = varExtras.reduce((s, e) => s + e.price, 0);
+      const total = activeVarProduct.price + varSizePrice + extrasSum;
+      document.getElementById('varModalTotalBtn').innerText = formatIDR(total);
+    }
+
+    function confirmVariantAddToCart() {
+      playBeep(900);
+      const extrasSum = varExtras.reduce((s, e) => s + e.price, 0);
+      const unitPrice = activeVarProduct.price + varSizePrice + extrasSum;
+      const notes = document.getElementById('varNotesInput').value.trim();
+      cart.push({
+        id: `${activeVarProduct.id}-${Date.now()}`,
+        name: activeVarProduct.name,
+        unitPrice,
+        qty: 1,
+        size: varSize,
+        sugar: varSugar,
+        ice: varIce,
+        notes: notes || undefined
+      });
+      closeModal();
+      renderCart();
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cartItemList');
+      if (cart.length === 0) {
+        container.innerHTML = `
+          <div class="h-full flex flex-col items-center justify-center text-center p-6 text-stone-500">
+            <i data-lucide="shopping-bag" class="w-10 h-10 mb-2 opacity-30"></i>
+            <span class="text-xs">Keranjang transaksi masih kosong</span>
+          </div>
+        `;
+      } else {
+        container.innerHTML = cart.map((item, idx) => `
+          <div class="bg-stone-950/70 border border-stone-800 p-2.5 rounded-xl flex flex-col gap-1 text-xs">
+            <div class="flex justify-between items-start">
+              <span class="font-semibold text-stone-200">${item.name}</span>
+              <span class="font-mono font-bold text-amber-50">${formatIDR(item.unitPrice * item.qty)}</span>
+            </div>
+            <div class="text-[10px] text-stone-400">${item.size} · Gula ${item.sugar} · ${item.ice}</div>
+            ${item.notes ? `<div class="text-[10px] text-amber-300/90 italic">*${item.notes}</div>` : ''}
+            <div class="flex justify-between items-center pt-1 border-t border-stone-800/40">
+              <span class="text-[10px] text-stone-500 font-mono">@ ${formatIDR(item.unitPrice)}</span>
+              <div class="flex items-center gap-2">
+                <button onclick="updateQty(${idx}, -1)" class="w-5 h-5 bg-stone-800 rounded text-stone-200 flex items-center justify-center">-</button>
+                <span class="font-mono font-bold">${item.qty}</span>
+                <button onclick="updateQty(${idx}, 1)" class="w-5 h-5 bg-stone-800 rounded text-stone-200 flex items-center justify-center">+</button>
+                <button onclick="removeItem(${idx})" class="text-stone-500 hover:text-rose-400 ml-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      const sub = cart.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+      const disc = Math.round((sub * selectedDiscountPercent) / 100);
+      const taxable = Math.max(0, sub - disc);
+      const tax = Math.round(taxable * 0.10);
+      const srv = Math.round(taxable * 0.05);
+      const grand = taxable + tax + srv;
+
+      document.getElementById('calcSubtotal').innerText = formatIDR(sub);
+      document.getElementById('calcDiscount').innerText = `-${formatIDR(disc)}`;
+      document.getElementById('calcTax').innerText = formatIDR(tax);
+      document.getElementById('calcService').innerText = formatIDR(srv);
+      document.getElementById('calcGrandTotal').innerText = formatIDR(grand);
+      document.getElementById('btnPayTotal').innerText = formatIDR(grand);
+      document.getElementById('payModalGrandTotal').innerText = formatIDR(grand);
+      document.getElementById('cashInput').value = grand;
+      updateChange();
+
+      // Mobile sync
+      const totalCount = cart.reduce((s, i) => s + i.qty, 0);
+      const mbBadge = document.getElementById('mobileCartBadge');
+      if (mbBadge) mbBadge.innerText = totalCount;
+      const mbFloatCount = document.getElementById('mobileFloatingItemCount');
+      if (mbFloatCount) mbFloatCount.innerText = totalCount;
+      const mbFloatTotal = document.getElementById('mobileFloatingTotal');
+      if (mbFloatTotal) mbFloatTotal.innerText = formatIDR(grand);
+      const mbSummary = document.getElementById('mobileCartItemSummary');
+      if (mbSummary) mbSummary.innerText = `${totalCount} Item`;
+
+      const floatBar = document.getElementById('mobileFloatingCartBar');
+      if (floatBar) {
+        floatBar.classList.toggle('hidden', currentMobilePosTab !== 'catalog' || totalCount === 0);
+      }
+
+      lucide.createIcons();
+    }
+
+    function setMobilePosTab(tab) {
+      currentMobilePosTab = tab;
+      const catalogPanel = document.getElementById('cashierCatalogPanel');
+      const cartAside = document.getElementById('cashierCartAside');
+      const catBtn = document.getElementById('mobileTabCatalogBtn');
+      const cartBtn = document.getElementById('mobileTabCartBtn');
+      const floatBar = document.getElementById('mobileFloatingCartBar');
+      const totalCount = cart.reduce((s, i) => s + i.qty, 0);
+
+      if (tab === 'catalog') {
+        if (catalogPanel) {
+          catalogPanel.classList.remove('hidden');
+          catalogPanel.classList.add('flex');
+        }
+        if (cartAside) {
+          cartAside.classList.add('hidden');
+          cartAside.classList.remove('flex');
+        }
+        if (catBtn) {
+          catBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all bg-amber-600 text-stone-950 shadow';
+        }
+        if (cartBtn) {
+          cartBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all text-stone-400 hover:text-stone-200';
+        }
+        if (floatBar) {
+          floatBar.classList.toggle('hidden', totalCount === 0);
+        }
+      } else {
+        if (catalogPanel) {
+          catalogPanel.classList.add('hidden');
+          catalogPanel.classList.remove('flex');
+        }
+        if (cartAside) {
+          cartAside.classList.remove('hidden');
+          cartAside.classList.add('flex');
+        }
+        if (catBtn) {
+          catBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all text-stone-400 hover:text-stone-200';
+        }
+        if (cartBtn) {
+          cartBtn.className = 'flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all bg-amber-600 text-stone-950 shadow';
+        }
+        if (floatBar) {
+          floatBar.classList.add('hidden');
+        }
+      }
+      playBeep(600);
+      lucide.createIcons();
+    }
+
+    function updateQty(idx, delta) {
+      playBeep(700);
+      cart[idx].qty += delta;
+      if (cart[idx].qty <= 0) cart.splice(idx, 1);
+      renderCart();
+    }
+
+    function removeItem(idx) {
+      playBeep(400);
+      cart.splice(idx, 1);
+      renderCart();
+    }
+
+    function clearCart() {
+      if (confirm('Kosongkan semua pesanan?')) {
+        playBeep(350);
+        cart = [];
+        renderCart();
+      }
+    }
+
+    function setOrderType(type) {
+      playBeep(800);
+      currentOrderType = type;
+      ['DineIn', 'Takeaway', 'Delivery'].forEach(t => {
+        const id = `type${t}`;
+        const active = (t === 'DineIn' && type === 'dine_in') || (t === 'Takeaway' && type === 'takeaway') || (t === 'Delivery' && type === 'delivery');
+        document.getElementById(id).className = active ? 'py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 bg-amber-600/20 text-amber-300 border border-amber-600/40' : 'py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 text-stone-400 hover:text-stone-200';
+      });
+      document.getElementById('tableInputWrapper').style.display = type === 'dine_in' ? 'flex' : 'none';
+    }
+
+    function toggleDiscount() {
+      selectedDiscountPercent = selectedDiscountPercent === 10 ? 0 : 10;
+      document.getElementById('discountLabel').innerText = selectedDiscountPercent > 0 ? 'Diskon: Member (10%)' : 'Tanpa Diskon (0%)';
+      renderCart();
+    }
+
+    function holdActiveOrder() {
+      if (cart.length === 0) return;
+      playBeep(850);
+      const sub = cart.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+      holdOrders.push({
+        id: `h_${Date.now()}`,
+        number: `HOLD-#0${holdOrders.length + 1}`,
+        table: document.getElementById('tableNoInput').value,
+        total: sub,
+        itemsCount: cart.length
+      });
+      cart = [];
+      renderHoldOrders();
+      renderCart();
+    }
+
+    function renderHoldOrders() {
+      document.getElementById('holdBadge').innerText = holdOrders.length;
+      document.getElementById('holdOrdersList').innerHTML = holdOrders.length === 0 ? '<p class="text-stone-500 text-center">Tidak ada draf ditahan</p>' : holdOrders.map((h, i) => `
+        <div class="bg-stone-950 p-3 rounded-lg border border-stone-800 flex justify-between items-center">
+          <div>
+            <span class="font-bold font-mono text-white">${h.number} (Meja ${h.table})</span>
+            <span class="text-stone-400 block text-[11px]">${h.itemsCount} Menu · ${formatIDR(h.total)}</span>
+          </div>
+          <button onclick="restoreHold(${i})" class="px-3 py-1 bg-emerald-500 text-slate-950 font-bold rounded text-xs">Lanjutkan</button>
+        </div>
+      `).join('');
+    }
+
+    function restoreHold(i) {
+      playBeep(900);
+      holdOrders.splice(i, 1);
+      renderHoldOrders();
+      closeModal();
+    }
+
+    function renderTables() {
+      document.getElementById('tablesContainer').innerHTML = TABLES.map(t => `
+        <div onclick="selectTable('${t.name}')" class="p-3 rounded-xl border ${t.status === 'available' ? 'border-amber-600/30 bg-emerald-950/20' : 'border-amber-500/30 bg-amber-950/20'} cursor-pointer">
+          <span class="font-bold block">${t.name}</span>
+          <span class="text-[10px] text-stone-400">${t.status === 'available' ? 'Tersedia' : 'Terisi'}</span>
+        </div>
+      `).join('');
+    }
+
+    function selectTable(name) {
+      document.getElementById('tableNoInput').value = name.replace(/\D/g, '');
+      setOrderType('dine_in');
+      closeModal();
+    }
+
+    function setPayMethod(m) {
+      playBeep(800);
+      payMethod = m;
+      document.getElementById('cashSection').style.display = m === 'cash' ? 'block' : 'none';
+      document.getElementById('qrisSection').style.display = m === 'qris' ? 'flex' : 'none';
+    }
+
+    function updateChange() {
+      const sub = cart.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+      const disc = Math.round((sub * selectedDiscountPercent) / 100);
+      const taxable = Math.max(0, sub - disc);
+      const grand = taxable + Math.round(taxable * 0.10) + Math.round(taxable * 0.05);
+      const entered = parseInt(document.getElementById('cashInput').value || '0', 10);
+      const change = Math.max(0, entered - grand);
+      document.getElementById('cashChangeDisplay').innerText = formatIDR(change);
+    }
+
+    function quickCash(amt) {
+      playBeep(700);
+      if (amt === 'exact') {
+        const sub = cart.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+        const disc = Math.round((sub * selectedDiscountPercent) / 100);
+        const taxable = Math.max(0, sub - disc);
+        amt = taxable + Math.round(taxable * 0.10) + Math.round(taxable * 0.05);
+      }
+      document.getElementById('cashInput').value = amt;
+      updateChange();
+    }
+
+    function completePaymentTransaction() {
+      playBeep(1200, 0.2);
+      const sub = cart.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+      const disc = Math.round((sub * selectedDiscountPercent) / 100);
+      const taxable = Math.max(0, sub - disc);
+      const grand = taxable + Math.round(taxable * 0.10) + Math.round(taxable * 0.05);
+      const ordNum = 'RDX-' + Math.floor(1000 + Math.random() * 9000);
+      const guest = document.getElementById('customerNameInput').value || 'Pelanggan';
+      const tbl = document.getElementById('tableNoInput').value || '01';
+      const cashierName = (currentUser && currentUser.name) ? currentUser.name : 'Rifqy Ridho P.';
+      const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+
+      completedOrders.unshift({
+        number: ordNum,
+        time: timeStr,
+        guest,
+        total: grand,
+        method: payMethod.toUpperCase(),
+        cashier: cashierName
+      });
+
+      if (payMethod === 'cash') drawerCash += grand;
+      document.getElementById('headerDrawerCash').innerText = `Laci: ${formatIDR(drawerCash)}`;
+
+      // PUSH TO KDS
+      kitchenTickets.unshift({
+        id: 'kt_' + Date.now(),
+        orderNumber: ordNum,
+        orderType: currentOrderType,
+        table: tbl,
+        guest,
+        time: timeStr,
+        createdAt: Date.now(),
+        status: 'pending',
+        items: cart.map(i => ({ name: i.name, qty: i.qty, size: i.size, notes: i.notes }))
+      });
+
+      document.getElementById('receiptContent').innerHTML = `
+        <!-- Header Struk: Logo Ridex Cafe (SVG), Nama "RIDEX CAFE", Sub-header, Alamat, Telp & NPWP -->
+        <div class="text-center pb-1">
+          <!-- Mascot SVG Logo: Bear holding coffee cup with coffee bean -->
+          <div class="w-16 h-16 mx-auto mb-1.5 flex items-center justify-center">
+            <svg class="w-full h-full" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="46" fill="#fdfbf7" stroke="#4a2c11" stroke-width="2"/>
+              <circle cx="30" cy="26" r="10" fill="#4a2c11"/>
+              <circle cx="70" cy="26" r="10" fill="#4a2c11"/>
+              <circle cx="30" cy="26" r="5" fill="#e8d5c4"/>
+              <circle cx="70" cy="26" r="5" fill="#e8d5c4"/>
+              <circle cx="50" cy="48" r="28" fill="#ffffff" stroke="#4a2c11" stroke-width="3"/>
+              <circle cx="42" cy="44" r="3" fill="#4a2c11"/>
+              <circle cx="58" cy="44" r="3" fill="#4a2c11"/>
+              <ellipse cx="50" cy="53" rx="7" ry="5" fill="#fdf3e7"/>
+              <ellipse cx="50" cy="51" rx="4" ry="2.8" fill="#4a2c11"/>
+              <path d="M46 55 Q50 59 54 55" stroke="#4a2c11" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <path d="M33 66 H67 V79 C67 85 61 88 50 88 C39 88 33 85 33 79 Z" fill="#4a2c11"/>
+              <path d="M67 70 H73 C75 70 76 72 75 75 C74 77 72 78 67 78" stroke="#4a2c11" stroke-width="2.5" fill="none"/>
+              <ellipse cx="50" cy="77" rx="4.5" ry="6" fill="#fdf3e7"/>
+              <path d="M50 72 Q52 77 50 82" stroke="#4a2c11" stroke-width="1.6" fill="none"/>
+            </svg>
+          </div>
+          <h2 class="text-base font-black tracking-wider uppercase text-slate-950 font-sans">RIDEX CAFE</h2>
+          <p class="text-[9px] font-bold tracking-widest text-emerald-800 uppercase font-sans">YOUR DAILY ESCAPE</p>
+          <p class="text-[10px] font-semibold text-slate-700 mt-0.5">Specialty Coffee &amp; Artisan Bakery</p>
+          <p class="text-[9px] text-slate-600 mt-1 leading-tight">
+            Jl. Ahmad Yani No. 45, Cilacap, Jawa Tengah<br>
+            Telp: (0282) 539-888 · NPWP: 94.882.112.4-522.000
+          </p>
+        </div>
+
+        <hr class="border-t border-dashed border-slate-300 my-3">
+
+        <!-- Metadata Transaksi -->
+        <div class="text-[10px] space-y-0.5 font-mono text-slate-800">
+          <div class="flex justify-between"><span>No. Struk :</span><span class="font-bold">${ordNum}</span></div>
+          <div class="flex justify-between"><span>Waktu     :</span><span>${timeStr}</span></div>
+          <div class="flex justify-between"><span>Kasir     :</span><span class="font-bold">${cashierName}</span></div>
+          <div class="flex justify-between"><span>Tipe      :</span><span class="font-bold uppercase">${currentOrderType === 'dine_in' ? 'DINE-IN (MEJA ' + tbl + ')' : currentOrderType.toUpperCase()}</span></div>
+          <div class="flex justify-between"><span>Pelanggan :</span><span>${guest}</span></div>
+        </div>
+
+        <hr class="border-t border-dashed border-slate-300 my-3">
+
+        <!-- List Item Pesanan -->
+        <div class="space-y-1.5 font-mono text-[10px]">
+          ${cart.map(i => `
+            <div>
+              <div class="flex justify-between font-semibold text-slate-900">
+                <span class="truncate pr-2">${i.qty}x ${i.name}</span>
+                <span>${formatIDR(i.unitPrice * i.qty)}</span>
+              </div>
+              ${i.size !== 'Regular' || i.notes ? `
+                <div class="text-[9px] text-slate-600 italic pl-3">
+                  ${i.size !== 'Regular' ? `[${i.size}] ` : ''}
+                  ${i.notes ? `*${i.notes}` : ''}
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+
+        <hr class="border-t border-dashed border-slate-300 my-3">
+
+        <!-- Rincian Keuangan -->
+        <div class="text-[10px] space-y-0.5 font-mono text-slate-800">
+          <div class="flex justify-between"><span>Subtotal :</span><span>${formatIDR(sub)}</span></div>
+          ${disc > 0 ? `<div class="flex justify-between text-slate-700"><span>Diskon :</span><span>-${formatIDR(disc)}</span></div>` : ''}
+          <div class="flex justify-between text-slate-600"><span>PB1 Restoran (10%) :</span><span>${formatIDR(tax)}</span></div>
+          <div class="flex justify-between text-slate-600"><span>Service Charge (5%) :</span><span>${formatIDR(sc)}</span></div>
+          <div class="flex justify-between font-bold text-sm pt-1.5 border-t border-slate-400 text-slate-950">
+            <span>TOTAL :</span><span>${formatIDR(grand)}</span>
+          </div>
+        </div>
+
+        <hr class="border-t border-dashed border-slate-300 my-3">
+
+        <!-- Rincian Pembayaran -->
+        <div class="text-[10px] space-y-0.5 font-mono text-slate-800">
+          <div class="flex justify-between"><span>Metode Bayar :</span><span class="font-bold uppercase">${payMethod}</span></div>
+          ${payMethod === 'cash' ? `
+            <div class="flex justify-between"><span>Tunai Diterima :</span><span>${formatIDR(paid)}</span></div>
+            <div class="flex justify-between font-bold text-slate-900"><span>Kembalian :</span><span class="font-bold text-slate-900">${formatIDR(Math.max(0, paid - grand))}</span></div>
+          ` : `
+            <div class="flex justify-between"><span>Status :</span><span class="font-bold text-emerald-700">LUNAS (${payMethod.toUpperCase()})</span></div>
+          `}
+        </div>
+
+        <hr class="border-t border-dashed border-slate-300 my-3">
+
+        <!-- Footer Struk (Tetap Di Dalam Kertas Putih) -->
+        <div class="pt-1 pb-4 text-center space-y-1 text-[9px] text-slate-600 font-mono">
+          <p class="font-bold text-slate-900 text-[10px]">Terima Kasih atas Kunjungan Anda!</p>
+          <p>Follow IG: @ridexcafe.cilacap | Password WiFi: ridexcoffee2026</p>
+          <p class="pt-1 text-slate-500 text-[8px] uppercase tracking-wider font-semibold">LOKA POS SYSTEM · CILACAP OUTLET</p>
+        </div>
+      `;
+
+      closeModal();
+      openModal('receiptModal');
+    }
+
+    function newTransactionFromReceipt() {
+      cart = [];
+      renderCart();
+      closeModal();
+    }
+
+    function printKitchenTicketDirect() {
+      if (cart.length === 0) return;
+      playBeep(900);
+      const tbl = document.getElementById('tableNoInput').value || '01';
+      const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+      
+      document.getElementById('receiptContent').innerHTML = `
+        <div class="text-center pb-2.5 border-b-2 border-slate-900">
+          <span class="text-[10px] font-black uppercase tracking-widest bg-stone-900 text-white px-2 py-0.5 rounded">
+            TIKET DAPUR &amp; BAR
+          </span>
+          <h3 class="text-base font-black mt-2 text-slate-950">
+            ${currentOrderType === 'dine_in' ? 'MEJA: ' + tbl : currentOrderType.toUpperCase()}
+          </h3>
+          <p class="text-[10px] text-slate-600 mt-0.5 font-mono">${timeStr}</p>
+        </div>
+        <div class="py-3 space-y-2 font-mono text-[11px]">
+          ${cart.map(i => `
+            <div class="border-b border-dashed border-slate-300 pb-1.5">
+              <div class="flex justify-between font-bold text-slate-900">
+                <span>${i.qty}x ${i.name}</span>
+                <span class="text-[10px] bg-slate-200 px-1 rounded">${i.size}</span>
+              </div>
+              ${i.notes ? `<div class="text-rose-600 font-semibold text-[10px] mt-0.5">*CATATAN: ${i.notes}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+        <div class="pt-2 pb-6 text-center text-[9px] text-stone-500 font-mono">
+          Pesanan dikirim langsung ke Barista &amp; Kitchen Ridex Cafe Cilacap
+        </div>
+      `;
+      openModal('receiptModal');
+    }
+
+    function splitEven(cnt) {
+      playBeep(800);
+      const sub = cart.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+      const disc = Math.round((sub * selectedDiscountPercent) / 100);
+      const taxable = Math.max(0, sub - disc);
+      const grand = taxable + Math.round(taxable * 0.10) + Math.round(taxable * 0.05);
+      document.getElementById('splitResultDisplay').innerText = formatIDR(Math.round(grand / cnt));
+    }
+
+    function scanManualSKU() {
+      const sku = (document.getElementById('scannerInput').value || '').trim();
+      const p = PRODUCTS.find(x => x.sku.toLowerCase() === sku.toLowerCase());
+      if (p) {
+        playBeep(1200);
+        handleProductClick(p.id);
+        closeModal();
+      } else {
+        playBeep(300);
+        alert('SKU tidak ditemukan');
+      }
+    }
+
+    // MODAL HELPERS
+    function openModal(id) {
+      document.getElementById('modalOverlay').classList.remove('hidden');
+      ['variantModal', 'paymentModal', 'receiptModal', 'shiftModal', 'tableModal', 'holdModal', 'scannerModal', 'splitModal', 'addMenuModal', 'logoutModal'].forEach(m => {
+        document.getElementById(m).classList.add('hidden');
+      });
+      document.getElementById(id).classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.add('hidden');
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
