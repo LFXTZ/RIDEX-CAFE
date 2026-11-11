@@ -97,118 +97,38 @@ export const CartPanel: React.FC<CartPanelProps> = ({
   };
 
   return (
-    <aside className="w-full md:w-[380px] lg:w-[420px] xl:w-[460px] h-full flex flex-col justify-between overflow-hidden relative bg-stone-900 border-l border-stone-800 shrink-0 select-none">
-      {/* Mobile Back Button (< md) */}
-      {onBackToCatalog && (
-        <div className="p-2.5 bg-stone-950 border-b border-stone-800 flex items-center justify-between md:hidden shrink-0">
-          <button
-            onClick={() => {
-              soundManager.playClick();
-              onBackToCatalog();
-            }}
-            className="px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-750 text-amber-300 text-xs font-semibold flex items-center gap-1.5 border border-stone-700 active:scale-95 transition-all"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Kembali ke Menu</span>
-          </button>
-          <span className="text-xs font-mono font-bold text-amber-400">
+    <aside className="fixed inset-0 z-50 flex flex-col h-[100dvh] max-h-[100dvh] bg-stone-900 overflow-hidden md:static md:w-[380px] lg:w-[420px] xl:w-[460px] md:h-full md:border-l md:border-stone-800 md:shrink-0 md:z-auto select-none">
+      {/* Header Keranjang (Atas: Tombol Kembali ke Menu & Jumlah Item) */}
+      <div className="flex-shrink-0 p-4 border-b border-stone-800 bg-stone-950 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {onBackToCatalog && (
+            <button
+              onClick={() => {
+                soundManager.playClick();
+                onBackToCatalog();
+              }}
+              className="md:hidden px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-750 text-amber-300 text-xs font-semibold flex items-center gap-1.5 border border-stone-700 active:scale-95 transition-all"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Kembali ke Menu</span>
+            </button>
+          )}
+          <div className="hidden md:flex items-center gap-2">
+            <ShoppingBag className="w-4 h-4 text-amber-400" />
+            <span className="text-sm font-bold text-white">Keranjang Tagihan</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="px-2.5 py-1 rounded-full bg-amber-600/20 text-amber-300 border border-amber-600/30 text-xs font-mono font-bold">
             {totalItemCount} Item
           </span>
-        </div>
-      )}
-
-      {/* Header: Order Type Tabs */}
-      <div className="p-3 bg-stone-900/95 border-b border-stone-800 flex flex-col gap-2 shrink-0">
-        <div className="grid grid-cols-3 gap-1 bg-stone-950 p-1 rounded-xl border border-stone-800">
-          <button
-            onClick={() => {
-              soundManager.playClick();
-              onOrderTypeChange('dine_in');
-            }}
-            className={`py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-              orderType === 'dine_in'
-                ? 'bg-amber-600 text-stone-950 font-bold shadow-md'
-                : 'text-stone-400 hover:text-stone-200'
-            }`}
-          >
-            <Utensils className="w-3.5 h-3.5" />
-            <span>Dine-In</span>
-          </button>
-          <button
-            onClick={() => {
-              soundManager.playClick();
-              onOrderTypeChange('takeaway');
-            }}
-            className={`py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-              orderType === 'takeaway'
-                ? 'bg-amber-600 text-stone-950 font-bold shadow-md'
-                : 'text-stone-400 hover:text-stone-200'
-            }`}
-          >
-            <ShoppingBag className="w-3.5 h-3.5" />
-            <span>Takeaway</span>
-          </button>
-          <button
-            onClick={() => {
-              soundManager.playClick();
-              onOrderTypeChange('delivery');
-            }}
-            className={`py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-              orderType === 'delivery'
-                ? 'bg-amber-600 text-stone-950 font-bold shadow-md'
-                : 'text-stone-400 hover:text-stone-200'
-            }`}
-          >
-            <Truck className="w-3.5 h-3.5" />
-            <span>Delivery</span>
-          </button>
-        </div>
-
-        {/* Customer & Table details inputs */}
-        <div className="flex items-center gap-2">
-          {orderType === 'dine_in' ? (
-            <div className="flex-1 flex items-center gap-1 bg-stone-950 px-2.5 py-1.5 rounded-lg border border-stone-800">
-              <Hash className="w-3.5 h-3.5 text-stone-500 shrink-0" />
-              <input
-                type="text"
-                placeholder="No. Meja (mis: 04)"
-                value={tableNumber}
-                onChange={(e) => onTableNumberChange(e.target.value)}
-                className="w-full bg-transparent text-xs text-amber-50 placeholder-stone-500 focus:outline-none"
-              />
-              <button
-                onClick={() => {
-                  soundManager.playClick();
-                  onOpenTableMap();
-                }}
-                className="text-[11px] text-amber-400 hover:text-amber-300 font-medium px-1.5 py-0.5 rounded bg-amber-950/60 border border-amber-600/40 whitespace-nowrap"
-                title="Pilih Meja dari Peta"
-              >
-                Peta
-              </button>
-            </div>
-          ) : null}
-
-          <div className="flex-1 flex items-center gap-1.5 bg-stone-950 px-2.5 py-1.5 rounded-lg border border-stone-800">
-            <User className="w-3.5 h-3.5 text-stone-500 shrink-0" />
-            <input
-              type="text"
-              placeholder="Nama Pelanggan (opsional)"
-              value={guestName}
-              onChange={(e) => onGuestNameChange(e.target.value)}
-              className="w-full bg-transparent text-xs text-amber-50 placeholder-stone-500 focus:outline-none"
-            />
-          </div>
-
           {items.length > 0 && (
             <button
               onClick={() => {
-                if (window.confirm('Kosongkan semua pesanan di keranjang?')) {
-                  soundManager.playAlert();
-                  onClearCart();
-                }
+                soundManager.playAlert();
+                onClearCart();
               }}
-              className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg border border-transparent hover:border-rose-500/30 transition-colors"
+              className="p-1.5 text-stone-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
               title="Kosongkan Keranjang"
             >
               <Trash2 className="w-4 h-4" />
@@ -217,8 +137,94 @@ export const CartPanel: React.FC<CartPanelProps> = ({
         </div>
       </div>
 
-      {/* Cart Items List */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      {/* Area Tengah (List Menu & Rincian Subtotal): SATU-SATUNYA kontainer yang boleh di-scroll */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+        {/* Order Type & Table/Guest Meta */}
+        <div className="p-3 bg-stone-950/80 rounded-xl border border-stone-800 space-y-2">
+          <div className="grid grid-cols-3 gap-1 bg-stone-900 p-1 rounded-lg border border-stone-800">
+            <button
+              onClick={() => {
+                soundManager.playClick();
+                onOrderTypeChange('dine_in');
+              }}
+              className={`py-1.5 px-2 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-all ${
+                orderType === 'dine_in'
+                  ? 'bg-amber-600/20 text-amber-300 border border-amber-500/40'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <Utensils className="w-3.5 h-3.5" />
+              <span>Dine-In</span>
+            </button>
+            <button
+              onClick={() => {
+                soundManager.playClick();
+                onOrderTypeChange('takeaway');
+              }}
+              className={`py-1.5 px-2 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-all ${
+                orderType === 'takeaway'
+                  ? 'bg-amber-600/20 text-amber-300 border border-amber-500/40'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>Takeaway</span>
+            </button>
+            <button
+              onClick={() => {
+                soundManager.playClick();
+                onOrderTypeChange('delivery');
+              }}
+              className={`py-1.5 px-2 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-all ${
+                orderType === 'delivery'
+                  ? 'bg-amber-600/20 text-amber-300 border border-amber-500/40'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <Truck className="w-3.5 h-3.5" />
+              <span>Delivery</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {orderType === 'dine_in' ? (
+              <div className="flex-1 flex items-center gap-1 bg-stone-900 px-2.5 py-1.5 rounded-lg border border-stone-800">
+                <Hash className="w-3.5 h-3.5 text-stone-500 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="No. Meja (mis: 04)"
+                  value={tableNumber}
+                  onChange={(e) => onTableNumberChange(e.target.value)}
+                  className="w-full bg-transparent text-xs text-amber-50 placeholder-stone-500 focus:outline-none font-mono"
+                />
+                <button
+                  onClick={() => {
+                    soundManager.playClick();
+                    onOpenTableMap();
+                  }}
+                  className="text-[10px] text-amber-400 hover:text-amber-300 font-medium px-1.5 py-0.5 rounded bg-amber-950/60 border border-amber-600/40 whitespace-nowrap"
+                  title="Pilih Meja dari Peta"
+                >
+                  Peta
+                </button>
+              </div>
+            ) : null}
+
+            <div className="flex-1 flex items-center gap-1.5 bg-stone-900 px-2.5 py-1.5 rounded-lg border border-stone-800">
+              <User className="w-3.5 h-3.5 text-stone-500 shrink-0" />
+              <input
+                type="text"
+                placeholder="Nama Tamu (opsional)"
+                value={guestName}
+                onChange={(e) => onGuestNameChange(e.target.value)}
+                className="w-full bg-transparent text-xs text-amber-50 placeholder-stone-500 focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Cart Items List */}
+        <div className="space-y-2">
         {items.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-6 text-stone-500">
             <div className="w-14 h-14 rounded-2xl bg-stone-950 border border-stone-800 flex items-center justify-center text-stone-600 mb-3 shadow-inner">
@@ -359,6 +365,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
             );
           })
         )}
+        </div>
 
         {/* Bill Calculation & Summary Box (Inside Scrollable Area) */}
         <div className="p-3 bg-stone-950/80 rounded-xl border border-stone-800 space-y-2 text-xs">
@@ -426,10 +433,10 @@ export const CartPanel: React.FC<CartPanelProps> = ({
         </div>
       </div>
 
-      {/* Sticky Bottom Payment Footer (Anti-Terpotong dengan pb-8) */}
-      <div className="sticky bottom-0 left-0 right-0 bg-stone-900 border-t border-stone-800 p-4 pb-8 space-y-2.5 z-30 shadow-[0_-10px_25px_rgba(0,0,0,0.5)] shrink-0">
-        {/* Row 1: Action Buttons Grid */}
-        <div className="grid grid-cols-3 gap-1.5">
+      {/* Area Bawah Kumpulan Tombol Aksi & Pembayaran (Sticky Footer Bawah: Jaminan Bebas Terpotong dengan pb-10) */}
+      <div className="flex-shrink-0 bg-stone-900 border-t border-stone-800 p-4 pb-10 space-y-3 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] z-30">
+        {/* Baris 1: Opsi Tipe Pesanan / Split Bill (grid grid-cols-3 gap-2) */}
+        <div className="grid grid-cols-3 gap-2">
           {/* Split Bill */}
           <button
             disabled={items.length === 0}
@@ -473,35 +480,48 @@ export const CartPanel: React.FC<CartPanelProps> = ({
           </button>
         </div>
 
-        {/* Row 2: Grand Total Prominent Display */}
-        <div className="pt-1 flex items-center justify-between">
-          <div>
-            <span className="text-xs uppercase tracking-wider font-bold text-stone-400 block">
-              Grand Total
-            </span>
-            <span className="text-[10px] text-amber-400/90 font-medium">Termasuk PB1 &amp; Service</span>
-          </div>
-          <span className="text-2xl font-black font-mono tracking-tight text-amber-400 tabular-nums">
+        {/* Baris 2: Subtotal & Ringkasan Pajak ringkas */}
+        <div className="flex items-center justify-between text-xs text-stone-400">
+          <span className="flex items-center gap-1.5">
+            <span>Subtotal:</span>
+            <span className="font-mono text-stone-200 tabular-nums font-semibold">{formatRupiah(subtotal)}</span>
+            {discountAmount > 0 && (
+              <span className="font-mono text-amber-400 text-[11px]">(-{formatRupiah(discountAmount)})</span>
+            )}
+          </span>
+          <span className="font-mono text-stone-400 text-[11px]">
+            PB1 + Serv: {formatRupiah(taxPB1 + serviceCharge)}
+          </span>
+        </div>
+
+        {/* Baris 3: Tampilan GRAND TOTAL yang menonjol */}
+        <div className="text-amber-400 font-extrabold text-xl font-mono flex justify-between items-center">
+          <span className="text-xs uppercase tracking-wider text-stone-400 font-sans font-bold">
+            Grand Total
+          </span>
+          <span className="tabular-nums">
             {formatRupiah(grandTotal)}
           </span>
         </div>
 
-        {/* Row 3: Primary Checkout CTA Button with pb-8 guarantee */}
+        {/* Baris 4: Tombol Utama [BAYAR SEKARANG (Rp X.XXX)] */}
         <button
           disabled={items.length === 0}
           onClick={() => {
             soundManager.playClick();
             onOpenCheckout();
           }}
-          className="w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:bg-stone-850 disabled:text-stone-500 disabled:cursor-not-allowed text-stone-950 font-black rounded-xl transition-all shadow-lg shadow-amber-950/50 flex items-center justify-between active:scale-[0.99] cursor-pointer"
+          className="bg-amber-600 hover:bg-amber-500 disabled:bg-stone-850 disabled:text-stone-500 disabled:cursor-not-allowed text-amber-50 font-bold py-3.5 px-4 rounded-xl w-full text-center text-base block shadow-lg tracking-wide cursor-pointer active:scale-[0.99] transition-all"
         >
-          <div className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-stone-950" />
-            <span className="text-base font-black tracking-wide">BAYAR SEKARANG</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-amber-50" />
+              <span className="tracking-wide">BAYAR SEKARANG</span>
+            </div>
+            <span className="font-mono tabular-nums">
+              {formatRupiah(grandTotal)}
+            </span>
           </div>
-          <span className="text-base font-black font-mono tabular-nums text-stone-950">
-            {formatRupiah(grandTotal)}
-          </span>
         </button>
       </div>
     </aside>

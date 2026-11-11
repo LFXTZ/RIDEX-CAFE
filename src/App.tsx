@@ -545,7 +545,7 @@ export default function App() {
 
   // 2. Logged-in State -> SHOW FULL POS & WORKSPACE
   return (
-    <div className="h-screen w-screen flex flex-col bg-stone-950 text-amber-50 overflow-hidden font-sans">
+    <div className="h-screen h-[100dvh] max-h-[100dvh] w-screen flex flex-col bg-stone-950 text-amber-50 overflow-hidden font-sans">
       {/* Header Navigation Bar with User Profile and Logout */}
       <Header
         currentUser={currentUser}
