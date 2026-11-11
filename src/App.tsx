@@ -53,6 +53,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [currentRole, setCurrentRole] = useState<UserRole>('cashier');
   const [mobilePosTab, setMobilePosTab] = useState<'catalog' | 'cart'>('catalog');
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState<boolean>(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState<boolean>(false);
 
   // Cashier & System State
@@ -558,6 +559,11 @@ export default function App() {
         onOpenShiftModal={() => setIsShiftModalOpen(true)}
         onOpenHistoryModal={() => setIsHistoryOpen(true)}
         onRequestLogout={() => setIsLogoutModalOpen(true)}
+        isCollapsed={isHeaderCollapsed}
+        onToggleCollapse={() => {
+          soundManager.playClick();
+          setIsHeaderCollapsed((prev) => !prev);
+        }}
       />
 
       {/* Main Workspace (Conditional based on RBAC Role) */}

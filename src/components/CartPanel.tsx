@@ -97,7 +97,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
   };
 
   return (
-    <aside className="w-full md:w-[380px] lg:w-[420px] xl:w-[460px] h-full flex flex-col bg-stone-900 border-l border-stone-800 shrink-0 select-none">
+    <aside className="w-full md:w-[380px] lg:w-[420px] xl:w-[460px] h-full flex flex-col justify-between overflow-hidden relative bg-stone-900 border-l border-stone-800 shrink-0 select-none">
       {/* Mobile Back Button (< md) */}
       {onBackToCatalog && (
         <div className="p-2.5 bg-stone-950 border-b border-stone-800 flex items-center justify-between md:hidden shrink-0">
@@ -359,87 +359,77 @@ export const CartPanel: React.FC<CartPanelProps> = ({
             );
           })
         )}
+
+        {/* Bill Calculation & Summary Box (Inside Scrollable Area) */}
+        <div className="p-3 bg-stone-950/80 rounded-xl border border-stone-800 space-y-2 text-xs">
+          {/* Subtotal */}
+          <div className="flex items-center justify-between text-stone-400">
+            <span>Subtotal ({totalItemCount} item)</span>
+            <span className="font-mono text-stone-200 tabular-nums">{formatRupiah(subtotal)}</span>
+          </div>
+
+          {/* Discount Row & Selector */}
+          <div className="relative">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setShowDiscountSelector(!showDiscountSelector)}
+                className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 font-medium"
+              >
+                <Tag className="w-3 h-3" />
+                <span>{selectedDiscount.value > 0 ? selectedDiscount.name : 'Tambah Diskon / Promo'}</span>
+              </button>
+              <span className="font-mono text-amber-400 tabular-nums">
+                {discountAmount > 0 ? `-${formatRupiah(discountAmount)}` : 'Rp 0'}
+              </span>
+            </div>
+
+            {/* Discount Dropdown Selector */}
+            {showDiscountSelector && (
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-stone-900 border border-stone-700 rounded-xl p-2 shadow-2xl z-20 space-y-1">
+                <div className="text-[11px] font-semibold text-stone-300 px-2 py-1 border-b border-stone-800">
+                  Pilih Program Diskon:
+                </div>
+                {INITIAL_DISCOUNTS.map((disc) => (
+                  <button
+                    key={disc.id}
+                    onClick={() => {
+                      soundManager.playClick();
+                      onDiscountChange(disc);
+                      setShowDiscountSelector(false);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
+                      selectedDiscount.id === disc.id
+                        ? 'bg-amber-600/20 text-amber-300 border border-amber-500/40'
+                        : 'text-stone-300 hover:bg-stone-800'
+                    }`}
+                  >
+                    <span>{disc.name}</span>
+                    <span className="font-mono text-[10px] text-stone-400">
+                      {disc.type === 'percent' ? `${disc.value}%` : formatRupiah(disc.value)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Tax PB1 (10%) & Service Charge (5%) */}
+          <div className="flex items-center justify-between text-stone-400">
+            <span>Pajak Restoran PB1 (10%)</span>
+            <span className="font-mono text-stone-300 tabular-nums">{formatRupiah(taxPB1)}</span>
+          </div>
+
+          <div className="flex items-center justify-between text-stone-400">
+            <span>Service Charge (5%)</span>
+            <span className="font-mono text-stone-300 tabular-nums">{formatRupiah(serviceCharge)}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Bill Calculation & Summary Box */}
-      <div className="p-3.5 bg-stone-950 border-t border-stone-800 flex flex-col gap-2 shrink-0">
-        {/* Subtotal */}
-        <div className="flex items-center justify-between text-xs text-stone-400">
-          <span>Subtotal ({totalItemCount} item)</span>
-          <span className="font-mono text-stone-200 tabular-nums">{formatRupiah(subtotal)}</span>
-        </div>
-
-        {/* Discount Row & Selector */}
-        <div className="relative">
-          <div className="flex items-center justify-between text-xs">
-            <button
-              onClick={() => setShowDiscountSelector(!showDiscountSelector)}
-              className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 font-medium"
-            >
-              <Tag className="w-3 h-3" />
-              <span>{selectedDiscount.value > 0 ? selectedDiscount.name : 'Tambah Diskon / Promo'}</span>
-            </button>
-            <span className="font-mono text-amber-400 tabular-nums">
-              {discountAmount > 0 ? `-${formatRupiah(discountAmount)}` : 'Rp 0'}
-            </span>
-          </div>
-
-          {/* Discount Dropdown Selector */}
-          {showDiscountSelector && (
-            <div className="absolute bottom-full left-0 right-0 mb-2 bg-stone-900 border border-stone-700 rounded-xl p-2 shadow-2xl z-20 space-y-1">
-              <div className="text-[11px] font-semibold text-stone-300 px-2 py-1 border-b border-stone-800">
-                Pilih Program Diskon:
-              </div>
-              {INITIAL_DISCOUNTS.map((disc) => (
-                <button
-                  key={disc.id}
-                  onClick={() => {
-                    soundManager.playClick();
-                    onDiscountChange(disc);
-                    setShowDiscountSelector(false);
-                  }}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
-                    selectedDiscount.id === disc.id
-                      ? 'bg-amber-600/20 text-amber-300 border border-amber-500/40'
-                      : 'text-stone-300 hover:bg-stone-800'
-                  }`}
-                >
-                  <span>{disc.name}</span>
-                  <span className="font-mono text-[10px] text-stone-400">
-                    {disc.type === 'percent' ? `${disc.value}%` : formatRupiah(disc.value)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Tax PB1 (10%) & Service Charge (5%) */}
-        <div className="flex items-center justify-between text-xs text-stone-400">
-          <span>Pajak Restoran PB1 (10%)</span>
-          <span className="font-mono text-stone-300 tabular-nums">{formatRupiah(taxPB1)}</span>
-        </div>
-
-        <div className="flex items-center justify-between text-xs text-stone-400">
-          <span>Service Charge (5%)</span>
-          <span className="font-mono text-stone-300 tabular-nums">{formatRupiah(serviceCharge)}</span>
-        </div>
-
-        {/* Grand Total Prominent Display */}
-        <div className="pt-2 border-t border-stone-800 flex items-center justify-between">
-          <div>
-            <span className="text-xs uppercase tracking-wider font-semibold text-stone-400 block">
-              Grand Total
-            </span>
-            <span className="text-[11px] text-amber-400">Termasuk PB1 &amp; Service</span>
-          </div>
-          <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-amber-400 tabular-nums">
-            {formatRupiah(grandTotal)}
-          </span>
-        </div>
-
-        {/* Action Buttons Grid */}
-        <div className="grid grid-cols-3 gap-1.5 pt-1">
+      {/* Sticky Bottom Payment Footer (Anti-Terpotong dengan pb-8) */}
+      <div className="sticky bottom-0 left-0 right-0 bg-stone-900 border-t border-stone-800 p-4 pb-8 space-y-2.5 z-30 shadow-[0_-10px_25px_rgba(0,0,0,0.5)] shrink-0">
+        {/* Row 1: Action Buttons Grid */}
+        <div className="grid grid-cols-3 gap-1.5">
           {/* Split Bill */}
           <button
             disabled={items.length === 0}
@@ -447,10 +437,10 @@ export const CartPanel: React.FC<CartPanelProps> = ({
               soundManager.playClick();
               onOpenSplitBill();
             }}
-            className="px-2 py-2 bg-stone-800 hover:bg-stone-750 disabled:opacity-40 disabled:pointer-events-none rounded-lg text-[11px] font-medium text-amber-100 border border-stone-700 flex items-center justify-center gap-1 transition-colors"
+            className="px-2 py-2 bg-stone-800 hover:bg-stone-750 disabled:opacity-40 disabled:pointer-events-none rounded-xl text-xs font-semibold text-stone-200 border border-stone-700 flex items-center justify-center gap-1 active:scale-95 transition-all"
             title="Pisah Tagihan (Berdasarkan Item / Nominal)"
           >
-            <Split className="w-3.5 h-3.5 text-amber-400" />
+            <Split className="w-3.5 h-3.5 text-cyan-400" />
             <span>Split Bill</span>
           </button>
 
@@ -461,7 +451,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
               soundManager.playClick();
               onHoldOrder();
             }}
-            className="px-2 py-2 bg-stone-800 hover:bg-stone-750 disabled:opacity-40 disabled:pointer-events-none rounded-lg text-[11px] font-medium text-amber-100 border border-stone-700 flex items-center justify-center gap-1 transition-colors"
+            className="px-2 py-2 bg-stone-800 hover:bg-stone-750 disabled:opacity-40 disabled:pointer-events-none rounded-xl text-xs font-semibold text-stone-200 border border-stone-700 flex items-center justify-center gap-1 active:scale-95 transition-all"
             title="Simpan Pesanan ke Draf / Parkir"
           >
             <Bookmark className="w-3.5 h-3.5 text-amber-400" />
@@ -475,7 +465,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
               soundManager.playClick();
               onPrintKitchenTicket();
             }}
-            className="px-2 py-2 bg-stone-800 hover:bg-stone-750 disabled:opacity-40 disabled:pointer-events-none rounded-lg text-[11px] font-medium text-amber-100 border border-stone-700 flex items-center justify-center gap-1 transition-colors"
+            className="px-2 py-2 bg-stone-800 hover:bg-stone-750 disabled:opacity-40 disabled:pointer-events-none rounded-xl text-xs font-semibold text-stone-200 border border-stone-700 flex items-center justify-center gap-1 active:scale-95 transition-all"
             title="Cetak Tiket Pesanan Dapur / Bar"
           >
             <ChefHat className="w-3.5 h-3.5 text-amber-400" />
@@ -483,20 +473,33 @@ export const CartPanel: React.FC<CartPanelProps> = ({
           </button>
         </div>
 
-        {/* Primary Checkout CTA Button */}
+        {/* Row 2: Grand Total Prominent Display */}
+        <div className="pt-1 flex items-center justify-between">
+          <div>
+            <span className="text-xs uppercase tracking-wider font-bold text-stone-400 block">
+              Grand Total
+            </span>
+            <span className="text-[10px] text-amber-400/90 font-medium">Termasuk PB1 &amp; Service</span>
+          </div>
+          <span className="text-2xl font-black font-mono tracking-tight text-amber-400 tabular-nums">
+            {formatRupiah(grandTotal)}
+          </span>
+        </div>
+
+        {/* Row 3: Primary Checkout CTA Button with pb-8 guarantee */}
         <button
           disabled={items.length === 0}
           onClick={() => {
             soundManager.playClick();
             onOpenCheckout();
           }}
-          className="w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:bg-stone-850 disabled:text-stone-500 disabled:cursor-not-allowed text-stone-950 font-black rounded-xl transition-all shadow-lg shadow-amber-950/40 flex items-center justify-between active:scale-[0.99]"
+          className="w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:bg-stone-850 disabled:text-stone-500 disabled:cursor-not-allowed text-stone-950 font-black rounded-xl transition-all shadow-lg shadow-amber-950/50 flex items-center justify-between active:scale-[0.99] cursor-pointer"
         >
           <div className="flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-stone-950" />
-            <span className="text-sm font-black tracking-wide">BAYAR SEKARANG</span>
+            <span className="text-base font-black tracking-wide">BAYAR SEKARANG</span>
           </div>
-          <span className="text-base font-black font-mono tabular-nums">
+          <span className="text-base font-black font-mono tabular-nums text-stone-950">
             {formatRupiah(grandTotal)}
           </span>
         </button>
