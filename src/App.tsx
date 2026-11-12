@@ -547,12 +547,16 @@ export default function App() {
     const orderId = urlParams.get('orderId') || 'RDX-998877';
     const amount = parseInt(urlParams.get('amount') || '45000', 10);
     const tableNumber = urlParams.get('table') || '04';
+    const customerName = urlParams.get('customer') || '';
+    const rawItems = urlParams.get('items') || '';
 
     return (
       <CustomerPayScreen
         orderId={orderId}
         amount={amount}
         tableNumber={tableNumber}
+        customerName={customerName}
+        rawItems={rawItems}
       />
     );
   }

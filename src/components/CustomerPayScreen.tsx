@@ -1,41 +1,151 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   CheckCircle2, 
   CreditCard, 
   ShieldCheck, 
   Smartphone, 
   Coffee, 
-  ArrowRight,
-  ExternalLink,
   Receipt,
-  Store
+  Download,
+  Share2,
+  ChevronDown,
+  ChevronUp,
+  ArrowLeft,
+  Sparkles,
+  Printer
 } from 'lucide-react';
-import { formatRupiah } from '../utils/formatters';
+import { formatRupiah, formatDateTime } from '../utils/formatters';
 import { soundManager } from '../utils/audio';
+
+interface CustomerPayItem {
+  name: string;
+  qty: number;
+  price: number;
+  variant?: string;
+  sugar?: string;
+  ice?: string;
+  notes?: string;
+}
 
 interface CustomerPayScreenProps {
   orderId: string;
   amount: number;
   tableNumber: string;
+  customerName?: string;
+  rawItems?: string;
 }
 
 export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
   orderId,
   amount,
   tableNumber,
+  customerName,
+  rawItems,
 }) => {
-  const [selectedApp, setSelectedApp] = useState<string>('gopay');
+  const [selectedApp, setSelectedApp] = useState<string>('GoPay');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [paymentTime, setPaymentTime] = useState<string>('');
+  const [showItemDetails, setShowItemDetails] = useState<boolean>(true);
+  const [downloadSuccessToast, setDownloadSuccessToast] = useState<boolean>(false);
+
+  // Parse items from query param or localStorage cache
+  const orderData = useMemo(() => {
+    let parsedItems: CustomerPayItem[] = [];
+
+    // 1. Try URL rawItems parameter
+    if (rawItems) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(rawItems));
+        if (Array.isArray(decoded) && decoded.length > 0) {
+          parsedItems = decoded;
+        }
+      } catch (e) {
+        console.warn('Failed to parse items from URL param', e);
+      }
+    }
+
+    // 2. Try localStorage cache
+    if (parsedItems.length === 0) {
+      try {
+        const cached = localStorage.getItem(`ridex_order_${orderId}`);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && Array.isArray(parsed.items) && parsed.items.length > 0) {
+            parsedItems = parsed.items;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to read order cache from localStorage', e);
+      }
+    }
+
+    // 3. Fallback demo items if none found
+    if (parsedItems.length === 0) {
+      const estimatedItemsCount = Math.max(1, Math.round(amount / 35000));
+      if (estimatedItemsCount === 1) {
+        parsedItems = [
+          {
+            name: 'Ridex Signature Latte',
+            qty: 1,
+            price: amount > 38000 ? 38000 : amount,
+            variant: 'Large',
+            sugar: 'Normal (100%)',
+            ice: 'Less Ice',
+            notes: 'Kemasan takeaway ramah lingkungan',
+          },
+        ];
+      } else {
+        const item1Price = Math.round(amount * 0.55);
+        const item2Price = amount - item1Price;
+        parsedItems = [
+          {
+            name: 'Ridex Signature Latte',
+            qty: 1,
+            price: item1Price,
+            variant: 'Large',
+            sugar: 'Less Sugar (50%)',
+            ice: 'Less Ice',
+            notes: 'Extra creamy',
+          },
+          {
+            name: 'Butter Croissant',
+            qty: 1,
+            price: item2Price,
+            variant: 'Regular',
+            notes: 'Hangatkan sebentar',
+          },
+        ];
+      }
+    }
+
+    // Calculate subtotal and tax estimates
+    const computedSubtotal = parsedItems.reduce((acc, it) => acc + (it.price * it.qty), 0);
+    const taxRate = 0.10; // PB1 10%
+    const serviceRate = 0.05; // Service 5%
+
+    // If computed subtotal matches or approximates amount, calculate breakdown
+    const isExactBreakdown = Math.abs((computedSubtotal * 1.15) - amount) < 1000;
+    const baseSubtotal = isExactBreakdown ? computedSubtotal : Math.round(amount / 1.15);
+    const taxAmount = isExactBreakdown ? Math.round(baseSubtotal * taxRate) : Math.round((amount - baseSubtotal) * (10 / 15));
+    const serviceAmount = amount - baseSubtotal - taxAmount;
+
+    return {
+      items: parsedItems,
+      subtotal: baseSubtotal,
+      tax: taxAmount,
+      serviceCharge: serviceAmount,
+      customer: customerName || (tableNumber ? `Tamu Meja ${tableNumber}` : 'Pelanggan Setia'),
+    };
+  }, [rawItems, orderId, amount, tableNumber, customerName]);
 
   const paymentApps = [
-    { id: 'gopay', name: 'GoPay', color: 'from-blue-600 to-cyan-500', badge: 'E-Wallet' },
-    { id: 'ovo', name: 'OVO', color: 'from-purple-700 to-indigo-600', badge: 'E-Wallet' },
-    { id: 'dana', name: 'DANA', color: 'from-sky-600 to-blue-500', badge: 'E-Wallet' },
-    { id: 'shopeepay', name: 'ShopeePay', color: 'from-orange-600 to-amber-500', badge: 'E-Wallet' },
-    { id: 'bca', name: 'BCA Mobile', color: 'from-blue-800 to-blue-900', badge: 'Mobile Banking' },
-    { id: 'mandiri', name: 'Mandiri Livin', color: 'from-amber-600 to-yellow-600', badge: 'Mobile Banking' },
+    { id: 'GoPay', name: 'GoPay', color: 'from-blue-600 to-cyan-500', badge: 'E-Wallet' },
+    { id: 'OVO', name: 'OVO', color: 'from-purple-700 to-indigo-600', badge: 'E-Wallet' },
+    { id: 'DANA', name: 'DANA', color: 'from-sky-600 to-blue-500', badge: 'E-Wallet' },
+    { id: 'ShopeePay', name: 'ShopeePay', color: 'from-orange-600 to-amber-500', badge: 'E-Wallet' },
+    { id: 'BCA Mobile', name: 'BCA Mobile', color: 'from-blue-800 to-blue-900', badge: 'Mobile Banking' },
+    { id: 'Mandiri Livin', name: 'Mandiri Livin', color: 'from-amber-600 to-yellow-600', badge: 'Mobile Banking' },
   ];
 
   const handleConfirmPayment = () => {
@@ -43,10 +153,21 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
     setIsProcessing(true);
 
     setTimeout(() => {
+      // 1. Sensory feedback: Phone haptic vibration pulse
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate([100, 50, 150]);
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      // 2. Sensory feedback: Audio chime
       soundManager.playSuccess();
       setIsProcessing(false);
       setIsPaid(true);
-      const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+
+      const timeStr = formatDateTime();
       setPaymentTime(timeStr);
 
       const syncPayload = {
@@ -54,11 +175,12 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
         orderId,
         amount,
         table: tableNumber,
+        customer: orderData.customer,
         app: selectedApp,
         timestamp: Date.now(),
       };
 
-      // 1. BroadcastChannel across open tabs
+      // 3. BroadcastChannel across open tabs
       if ('BroadcastChannel' in window) {
         try {
           const bc = new BroadcastChannel('ridex_qris_sync');
@@ -69,42 +191,107 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
         }
       }
 
-      // 2. LocalStorage event trigger for cross-tab sync
+      // 4. LocalStorage event trigger for cross-tab sync
       try {
         localStorage.setItem('ridex_last_qris_paid', JSON.stringify(syncPayload));
       } catch (e) {
         console.warn('localStorage error:', e);
       }
-    }, 1200);
+    }, 1100);
+  };
+
+  const handleDownloadReceipt = () => {
+    soundManager.playClick();
+    setDownloadSuccessToast(true);
+    setTimeout(() => setDownloadSuccessToast(false), 3000);
+
+    // Create simple downloadable receipt text file as portable digital receipt
+    const receiptLines = [
+      '==========================================',
+      '          RIDEX CAFE CILACAP              ',
+      '         "YOUR DAILY ESCAPE"              ',
+      '  Jl. Ahmad Yani No. 45, Cilacap, Jateng  ',
+      '          Telp: (0282) 539-888            ',
+      '==========================================',
+      `No. Struk    : ${orderId}`,
+      `Tanggal/Jam  : ${paymentTime || formatDateTime()}`,
+      `Kasir        : Rifqy Ridho P.`,
+      `Meja         : Meja ${tableNumber}`,
+      `Pelanggan    : ${orderData.customer}`,
+      '------------------------------------------',
+      'MENU PESANAN:',
+      ...orderData.items.map(
+        (it) => `  ${it.qty}x ${it.name}\n     @${formatRupiah(it.price)} = ${formatRupiah(it.price * it.qty)}`
+      ),
+      '------------------------------------------',
+      `Subtotal     : ${formatRupiah(orderData.subtotal)}`,
+      `PB1 (10%)    : ${formatRupiah(orderData.tax)}`,
+      orderData.serviceCharge > 0 ? `Service (5%) : ${formatRupiah(orderData.serviceCharge)}` : '',
+      '==========================================',
+      `TOTAL DIBAYAR: ${formatRupiah(amount)}`,
+      `METODE       : QRIS (${selectedApp.toUpperCase()}) - LUNAS`,
+      `NMID         : ID1020268884920`,
+      `Ref ID       : RDX-TXN-${Date.now().toString().slice(-6)}`,
+      '==========================================',
+      'WiFi Password: ridexcoffee2026',
+      'Instagram    : @ridexcafe.cilacap',
+      '------------------------------------------',
+      ' Terima kasih atas kunjungan Anda!         ',
+      ' Silakan duduk manis, barista kami        ',
+      ' sedang menyiapkan pesanan Anda dengan hati.',
+      '==========================================',
+    ].filter(Boolean).join('\n');
+
+    const blob = new Blob([receiptLines], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Struk_QRIS_${orderId}_RidexCafe.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePrintReceipt = () => {
+    soundManager.playClick();
+    window.print();
+  };
+
+  const handleResetToHome = () => {
+    soundManager.playClick();
+    window.location.href = window.location.href.split('?')[0];
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] w-full bg-stone-950 text-amber-50 flex flex-col items-center justify-between p-4 sm:p-6 font-sans select-none overflow-y-auto">
-      {/* Background glow effects */}
+    <div className="min-h-screen min-h-[100dvh] w-full bg-stone-950 text-amber-50 flex flex-col items-center justify-between p-3 sm:p-6 font-sans select-none overflow-y-auto">
+      {/* Background ambient lighting */}
       <div className="fixed -top-24 -left-24 w-80 h-80 bg-amber-600/10 rounded-full blur-3xl pointer-events-none"></div>
       <div className="fixed -bottom-24 -right-24 w-80 h-80 bg-amber-700/10 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="w-full max-w-md mx-auto my-auto flex flex-col space-y-4 relative z-10">
+      <div className="w-full max-w-md mx-auto my-auto flex flex-col space-y-4 relative z-10 py-2">
         {/* Brand Header */}
         <div className="text-center flex flex-col items-center space-y-2">
-          <div className="w-16 h-16 rounded-2xl bg-[#f5ede4] p-1.5 shadow-xl border border-amber-800/30 flex items-center justify-center overflow-hidden">
+          <div className="w-16 h-16 rounded-2xl bg-[#f5ede4] p-1.5 shadow-xl border border-amber-800/30 flex items-center justify-center overflow-hidden hover:scale-105 transition-transform">
             <img 
               src="/assets/aistudio/extra-large_4af77947.png" 
-              alt="Ridex Cafe Mascot" 
+              alt="Ridex Cafe Mascot Logo" 
               className="w-full h-full object-contain"
             />
           </div>
           <div>
             <h1 className="text-xl font-black tracking-tight text-white uppercase font-sans">RIDEX CAFE</h1>
             <p className="text-[10px] font-bold tracking-widest text-amber-400 uppercase">YOUR DAILY ESCAPE</p>
-            <p className="text-xs text-stone-400 mt-0.5">Outlet Cilacap, Jawa Tengah</p>
+            <p className="text-xs text-stone-400 mt-0.5">Outlet Cilacap, Jawa Tengah · Jl. Ahmad Yani No. 45</p>
           </div>
         </div>
 
         {!isPaid ? (
-          /* PAYMENT FORM VIEW */
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-2xl space-y-4 backdrop-blur-xl">
-            {/* Tagline Badge */}
+          /* ========================================= */
+          /* 1. VIEW PRE-PAYMENT (ORDER REVIEW & PAY)  */
+          /* ========================================= */
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 sm:p-5 shadow-2xl space-y-4 backdrop-blur-xl animate-fadeIn">
+            {/* Header Badge */}
             <div className="flex items-center justify-between pb-3 border-b border-stone-800">
               <span className="text-xs font-bold text-stone-200 flex items-center gap-1.5">
                 <Smartphone className="w-4 h-4 text-cyan-400" />
@@ -115,22 +302,103 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
               </span>
             </div>
 
-            {/* Order Bill Card */}
-            <div className="bg-stone-950 p-4 rounded-xl border border-stone-800/90 space-y-2.5">
+            {/* Order Bill Summary */}
+            <div className="bg-stone-950 p-4 rounded-xl border border-stone-800/90 space-y-3">
               <div className="flex items-center justify-between text-xs text-stone-400">
                 <span>No. Tagihan Pesanan:</span>
                 <span className="font-mono font-bold text-stone-200">{orderId}</span>
               </div>
               <div className="flex items-center justify-between text-xs text-stone-400">
-                <span>Lokasi Meja:</span>
-                <span className="px-2 py-0.5 rounded bg-amber-950/60 border border-amber-600/40 text-amber-300 font-mono font-bold text-xs">
-                  Meja {tableNumber}
-                </span>
+                <span>Lokasi Meja &amp; Tamu:</span>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded bg-amber-950/60 border border-amber-600/40 text-amber-300 font-mono font-bold text-xs">
+                    Meja {tableNumber}
+                  </span>
+                  <span className="text-stone-300 text-xs font-medium truncate max-w-[120px]">
+                    {orderData.customer}
+                  </span>
+                </div>
               </div>
-              <div className="pt-2 border-t border-stone-800/80 flex items-center justify-between">
+
+              {/* ITEM BREAKDOWN (RINCIAN ITEM MAKANAN & MINUMAN) */}
+              <div className="pt-2 border-t border-stone-850">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-stone-300 flex items-center gap-1.5">
+                    <Coffee className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Rincian Item Pesanan ({orderData.items.reduce((s, i) => s + i.qty, 0)} item):</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playClick();
+                      setShowItemDetails(!showItemDetails);
+                    }}
+                    className="text-[11px] text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1"
+                  >
+                    <span>{showItemDetails ? 'Ciutkan' : 'Lihat Detail'}</span>
+                    {showItemDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+                </div>
+
+                {showItemDetails && (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                    {orderData.items.map((item, idx) => (
+                      <div 
+                        key={idx}
+                        className="p-2 rounded-lg bg-stone-900/90 border border-stone-800/80 flex items-start justify-between text-xs"
+                      >
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="px-1.5 py-0.2 bg-amber-600/20 text-amber-400 rounded text-[10px] font-bold font-mono">
+                              {item.qty}x
+                            </span>
+                            <span className="font-bold text-stone-100">{item.name}</span>
+                          </div>
+                          {(item.variant || item.sugar || item.ice) && (
+                            <div className="text-[10px] text-stone-400 pl-6 flex items-center gap-1 flex-wrap">
+                              {item.variant && <span>{item.variant}</span>}
+                              {item.sugar && <span>· Gula: {item.sugar}</span>}
+                              {item.ice && <span>· Es: {item.ice}</span>}
+                            </div>
+                          )}
+                          {item.notes && (
+                            <p className="text-[10px] text-amber-300/80 italic pl-6">
+                              Catatan: &ldquo;{item.notes}&rdquo;
+                            </p>
+                          )}
+                        </div>
+                        <span className="font-mono font-bold text-stone-200 tabular-nums shrink-0 pl-2">
+                          {formatRupiah(item.price * item.qty)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Subtotal & Taxes breakdown */}
+              <div className="pt-2 border-t border-stone-850 space-y-1.5 text-xs text-stone-400">
+                <div className="flex justify-between">
+                  <span>Subtotal Menu:</span>
+                  <span className="font-mono text-stone-300">{formatRupiah(orderData.subtotal)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Pajak Restoran (PB1 10%):</span>
+                  <span className="font-mono text-stone-300">{formatRupiah(orderData.tax)}</span>
+                </div>
+                {orderData.serviceCharge > 0 && (
+                  <div className="flex justify-between">
+                    <span>Service Charge (5%):</span>
+                    <span className="font-mono text-stone-300">{formatRupiah(orderData.serviceCharge)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Grand Total Row */}
+              <div className="pt-2 border-t border-stone-800 flex items-center justify-between">
                 <div>
-                  <span className="text-xs text-stone-400 block font-medium">Total yang Harus Dibayar:</span>
-                  <span className="text-[10px] text-stone-500">Termasuk PB1 &amp; Service</span>
+                  <span className="text-xs text-stone-400 block font-medium">Total Tagihan:</span>
+                  <span className="text-[10px] text-stone-500">Bebas Biaya Admin QRIS</span>
                 </div>
                 <span className="text-2xl font-black font-mono text-amber-400 tabular-nums">
                   {formatRupiah(amount)}
@@ -152,7 +420,7 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
                       soundManager.playClick();
                       setSelectedApp(app.id);
                     }}
-                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
                       selectedApp === app.id
                         ? 'border-amber-500 bg-amber-600/15 shadow-md shadow-amber-950/50'
                         : 'border-stone-800 bg-stone-950/80 hover:bg-stone-800/70'
@@ -194,7 +462,7 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
               {isProcessing ? (
                 <>
                   <div className="w-5 h-5 border-2 border-stone-950 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Memproses Pembayaran...</span>
+                  <span>Memproses Pembayaran QRIS...</span>
                 </>
               ) : (
                 <>
@@ -205,58 +473,179 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
             </button>
           </div>
         ) : (
-          /* SUCCESS CONFIRMATION VIEW */
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl p-6 shadow-2xl text-center space-y-5 animate-fadeIn backdrop-blur-xl">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/50">
-              <CheckCircle2 className="w-10 h-10" />
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold uppercase tracking-wider">
-                Pembayaran Berhasil!
-              </span>
-              <h2 className="text-xl font-black text-white pt-1">Terima Kasih!</h2>
-              <p className="text-xs text-stone-400 max-w-xs mx-auto">
-                Transaksi QRIS Anda telah diverifikasi otomatis oleh sistem kasir Ridex Cafe.
+          /* ============================================================== */
+          /* 2. VIEW POST-PAYMENT (INTERACTIVE DIGITAL THERMAL RECEIPT VIEW) */
+          /* ============================================================== */
+          <div className="space-y-4 animate-fadeIn">
+            {/* Top Success Banner */}
+            <div className="bg-emerald-950/60 border border-emerald-500/50 rounded-2xl p-4 text-center space-y-1.5 shadow-xl">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-md shadow-emerald-950/40">
+                <CheckCircle2 className="w-7 h-7" />
+              </div>
+              <h2 className="text-lg font-black text-emerald-300">Pembayaran QRIS Berhasil!</h2>
+              <p className="text-xs text-stone-300">
+                Pesanan telah diteruskan otomatis ke Barista &amp; Dapur Ridex Cafe.
               </p>
             </div>
 
-            <div className="bg-stone-950 p-4 rounded-xl border border-stone-800 text-left space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-stone-400">No. Transaksi:</span>
-                <span className="font-mono font-bold text-stone-200">{orderId}</span>
+            {/* 100% WHITE THERMAL RECEIPT CONTAINER */}
+            <div className="bg-white text-slate-900 font-mono p-5 sm:p-6 rounded-2xl shadow-2xl space-y-3 border border-stone-200">
+              {/* Receipt Brand Header */}
+              <div className="text-center space-y-1">
+                <div className="w-12 h-12 rounded-xl bg-[#f5ede4] p-1 mx-auto border border-amber-800/20 flex items-center justify-center overflow-hidden">
+                  <img 
+                    src="/assets/aistudio/extra-large_4af77947.png" 
+                    alt="Ridex Cafe" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <h3 className="font-black text-base tracking-wider text-slate-900">RIDEX CAFE</h3>
+                <p className="text-[10px] text-slate-600 font-bold tracking-widest uppercase">YOUR DAILY ESCAPE</p>
+                <p className="text-[10px] text-slate-500 leading-tight">
+                  Jl. Ahmad Yani No. 45, Cilacap, Jawa Tengah<br />
+                  Telp: (0282) 539-888
+                </p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-stone-400">Total Dibayar:</span>
-                <span className="font-mono font-bold text-emerald-400">{formatRupiah(amount)}</span>
+
+              {/* Dashed Separator */}
+              <div className="border-b-2 border-dashed border-slate-300 my-2"></div>
+
+              {/* Receipt Metadata */}
+              <div className="text-[11px] space-y-1 text-slate-700">
+                <div className="flex justify-between">
+                  <span>No. Struk</span>
+                  <span className="font-bold text-slate-900">{orderId}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Waktu Bayar</span>
+                  <span>{paymentTime || formatDateTime()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Kasir</span>
+                  <span className="font-bold">Rifqy Ridho P.</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Meja / Tamu</span>
+                  <span>Meja {tableNumber} · {orderData.customer}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-stone-400">Meja:</span>
-                <span className="font-mono text-stone-300">Meja {tableNumber}</span>
+
+              {/* Dashed Separator */}
+              <div className="border-b-2 border-dashed border-slate-300 my-2"></div>
+
+              {/* Itemized Table */}
+              <div className="space-y-1.5 text-xs">
+                {orderData.items.map((item, idx) => (
+                  <div key={idx} className="space-y-0.5">
+                    <div className="flex justify-between font-bold text-slate-900">
+                      <span>{item.qty}x {item.name}</span>
+                      <span>{formatRupiah(item.price * item.qty)}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px] text-slate-500 pl-4">
+                      <span>@{formatRupiah(item.price)} {item.variant ? `(${item.variant})` : ''}</span>
+                    </div>
+                    {item.notes && (
+                      <div className="text-[10px] text-amber-800 italic pl-4">
+                        &ldquo;{item.notes}&rdquo;
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div className="flex justify-between">
-                <span className="text-stone-400">Waktu Bayar:</span>
-                <span className="font-mono text-stone-300">{paymentTime}</span>
+
+              {/* Dashed Separator */}
+              <div className="border-b-2 border-dashed border-slate-300 my-2"></div>
+
+              {/* Calculation Summary */}
+              <div className="space-y-1 text-xs text-slate-700">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span>{formatRupiah(orderData.subtotal)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>PB1 (10%)</span>
+                  <span>{formatRupiah(orderData.tax)}</span>
+                </div>
+                {orderData.serviceCharge > 0 && (
+                  <div className="flex justify-between">
+                    <span>Service Charge (5%)</span>
+                    <span>{formatRupiah(orderData.serviceCharge)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm font-black text-slate-950 pt-1 border-t border-slate-200">
+                  <span>TOTAL DIBAYAR</span>
+                  <span className="tabular-nums">{formatRupiah(amount)}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-stone-400">Metode:</span>
-                <span className="font-bold text-amber-400 uppercase">QRIS ({selectedApp})</span>
+
+              {/* Payment Method & NMID */}
+              <div className="bg-slate-100 p-2.5 rounded-lg text-[10px] space-y-0.5 text-slate-700">
+                <div className="flex justify-between font-bold text-slate-900">
+                  <span>METODE PEMBAYARAN</span>
+                  <span className="text-emerald-700">QRIS ({selectedApp.toUpperCase()}) - LUNAS</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>NMID</span>
+                  <span>ID1020268884920</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Ref No.</span>
+                  <span>RDX-TXN-{Date.now().toString().slice(-6)}</span>
+                </div>
+              </div>
+
+              {/* Dashed Separator */}
+              <div className="border-b-2 border-dashed border-slate-300 my-2"></div>
+
+              {/* WiFi & Social */}
+              <div className="text-center text-[10px] text-slate-600 space-y-0.5">
+                <p>WiFi: <strong className="text-slate-900">ridexcoffee2026</strong></p>
+                <p>Instagram: <strong className="text-slate-900">@ridexcafe.cilacap</strong></p>
+                <p className="pt-1 text-[9px] text-slate-400">
+                  Terima kasih atas kunjungan Anda! Silakan duduk manis menunggu pesanan disajikan.
+                </p>
               </div>
             </div>
 
-            <div className="p-3 bg-amber-950/30 border border-amber-600/30 rounded-xl text-xs text-amber-300/90 flex items-center gap-2">
-              <Coffee className="w-5 h-5 text-amber-400 shrink-0" />
-              <span>Pesanan Anda telah diteruskan ke Barista &amp; Dapur. Silakan duduk manis menunggu pesanan disajikan!</span>
+            {/* Receipt Action Buttons */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleDownloadReceipt}
+                className="py-3 px-3 bg-amber-600 hover:bg-amber-500 text-stone-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-[0.98] cursor-pointer"
+              >
+                <Download className="w-4 h-4 text-stone-950" />
+                <span>Unduh / Simpan Struk</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrintReceipt}
+                className="py-3 px-3 bg-stone-800 hover:bg-stone-750 text-stone-200 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all border border-stone-700 active:scale-[0.98] cursor-pointer"
+              >
+                <Printer className="w-4 h-4 text-stone-300" />
+                <span>Cetak Struk (PDF)</span>
+              </button>
             </div>
 
-            <div className="pt-2 text-[11px] text-stone-500 font-mono">
-              Password WiFi: <strong className="text-stone-300">ridexcoffee2026</strong> · IG: <strong className="text-stone-300">@ridexcafe.cilacap</strong>
-            </div>
+            {downloadSuccessToast && (
+              <div className="p-2.5 bg-emerald-900/80 border border-emerald-500 text-emerald-200 text-xs rounded-xl text-center animate-fadeIn font-medium">
+                Struk digital berhasil diunduh ke ponsel Anda!
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleResetToHome}
+              className="w-full py-2.5 bg-transparent hover:bg-stone-900 text-stone-400 hover:text-stone-200 text-xs font-semibold rounded-xl transition-colors text-center"
+            >
+              Kembali ke Menu Utama
+            </button>
           </div>
         )}
 
         {/* Footer info */}
-        <p className="text-[10px] text-stone-500 text-center font-mono">
+        <p className="text-[10px] text-stone-500 text-center font-mono pt-2">
           Powered by Loka POS Engine · Ridex Cafe QRIS Integration
         </p>
       </div>

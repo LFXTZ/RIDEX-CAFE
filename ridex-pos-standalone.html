@@ -91,21 +91,67 @@
         </div>
 
         <!-- Order Bill Summary -->
-        <div class="bg-stone-950 p-4 rounded-xl border border-stone-800/90 space-y-2.5">
+        <div class="bg-stone-950 p-4 rounded-xl border border-stone-800/90 space-y-3">
           <div class="flex items-center justify-between text-xs text-stone-400">
             <span>No. Tagihan Pesanan:</span>
             <span class="font-mono font-bold text-stone-200" id="custPayOrderId">RDX-998877</span>
           </div>
           <div class="flex items-center justify-between text-xs text-stone-400">
-            <span>Lokasi Meja:</span>
-            <span class="px-2 py-0.5 rounded bg-amber-950/60 border border-amber-600/40 text-amber-300 font-mono font-bold text-xs" id="custPayTableNo">
-              Meja 04
-            </span>
+            <span>Lokasi Meja &amp; Tamu:</span>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-amber-950/60 border border-amber-600/40 text-amber-300 font-mono font-bold text-xs" id="custPayTableNo">
+                Meja 04
+              </span>
+              <span class="text-stone-300 text-xs font-medium truncate max-w-[120px]" id="custPayGuestName">
+                Tamu Meja 04
+              </span>
+            </div>
           </div>
+
+          <!-- Item Breakdown Section -->
+          <div class="pt-2 border-t border-stone-850">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-stone-300 flex items-center gap-1.5">
+                <i data-lucide="coffee" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span id="custPayItemsCountLabel">Rincian Item Pesanan:</span>
+              </span>
+              <button
+                type="button"
+                onclick="toggleCustPayItems()"
+                class="text-[11px] text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1 cursor-pointer"
+                id="custPayItemsToggleBtn"
+              >
+                <span id="custPayItemsToggleText">Ciutkan</span>
+                <i data-lucide="chevron-up" id="custPayItemsToggleIcon" class="w-3 h-3"></i>
+              </button>
+            </div>
+
+            <div id="custPayItemsList" class="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+              <!-- Item rows injected dynamically -->
+            </div>
+          </div>
+
+          <!-- Subtotal & Tax Breakdown -->
+          <div class="pt-2 border-t border-stone-850 space-y-1 text-xs text-stone-400">
+            <div class="flex justify-between">
+              <span>Subtotal Menu:</span>
+              <span class="font-mono text-stone-300" id="custPaySubtotal">Rp 0</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Pajak Restoran (PB1 10%):</span>
+              <span class="font-mono text-stone-300" id="custPayTax">Rp 0</span>
+            </div>
+            <div class="flex justify-between" id="custPayServiceRow">
+              <span>Service Charge (5%):</span>
+              <span class="font-mono text-stone-300" id="custPayService">Rp 0</span>
+            </div>
+          </div>
+
+          <!-- Grand Total Row -->
           <div class="pt-2 border-t border-stone-800/80 flex items-center justify-between">
             <div>
               <span class="text-xs text-stone-400 block font-medium">Total yang Harus Dibayar:</span>
-              <span class="text-[10px] text-stone-500">Termasuk PB1 10% &amp; Service 5%</span>
+              <span class="text-[10px] text-stone-500">Bebas Biaya Admin QRIS</span>
             </div>
             <span class="text-2xl font-black font-mono text-amber-400 tabular-nums" id="custPayAmountDisplay">
               Rp 0
@@ -189,49 +235,149 @@
         </button>
       </div>
 
-      <!-- Customer Payment Success Card -->
-      <div id="customerPaySuccessCard" class="bg-stone-900 border border-stone-800 rounded-2xl p-6 shadow-2xl text-center space-y-5 hidden backdrop-blur-xl">
-        <div class="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/50">
-          <i data-lucide="check-circle-2" class="w-10 h-10"></i>
-        </div>
-
-        <div class="space-y-1">
-          <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold uppercase tracking-wider">
-            Pembayaran Berhasil!
-          </span>
-          <h2 class="text-xl font-black text-white pt-1">Terima Kasih!</h2>
-          <p class="text-xs text-stone-400 max-w-xs mx-auto">
-            Transaksi QRIS Anda telah diverifikasi otomatis oleh kasir Ridex Cafe.
+      <!-- Customer Post-Payment: Interactive Digital Thermal Receipt View -->
+      <div id="customerPaySuccessCard" class="space-y-4 hidden animate-fadeIn">
+        <!-- Top Status Banner -->
+        <div class="bg-emerald-950/60 border border-emerald-500/50 rounded-2xl p-4 text-center space-y-1.5 shadow-xl">
+          <div class="w-12 h-12 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-md shadow-emerald-950/40">
+            <i data-lucide="check-circle-2" class="w-7 h-7 text-emerald-400"></i>
+          </div>
+          <h2 class="text-lg font-black text-emerald-300">Pembayaran QRIS Berhasil!</h2>
+          <p class="text-xs text-stone-300">
+            Pesanan telah diteruskan otomatis ke Barista &amp; Dapur Ridex Cafe.
           </p>
         </div>
 
-        <div class="bg-stone-950 p-4 rounded-xl border border-stone-800 text-left space-y-2 text-xs">
-          <div class="flex justify-between">
-            <span class="text-stone-400">No. Transaksi:</span>
-            <span class="font-mono font-bold text-stone-200" id="custSuccessOrderId">-</span>
+        <!-- 100% White Thermal Digital Receipt -->
+        <div class="bg-white text-slate-900 font-mono p-5 sm:p-6 rounded-2xl shadow-2xl space-y-3 border border-stone-200">
+          <!-- Receipt Brand Header -->
+          <div class="text-center space-y-1">
+            <div class="w-12 h-12 rounded-xl bg-[#f5ede4] p-1 mx-auto border border-amber-800/20 flex items-center justify-center overflow-hidden">
+              <img src="/assets/aistudio/extra-large_4af77947.png" alt="Ridex Cafe" class="w-full h-full object-contain" />
+            </div>
+            <h3 class="font-black text-base tracking-wider text-slate-900">RIDEX CAFE</h3>
+            <p class="text-[10px] text-slate-600 font-bold tracking-widest uppercase">YOUR DAILY ESCAPE</p>
+            <p class="text-[10px] text-slate-500 leading-tight">
+              Jl. Ahmad Yani No. 45, Cilacap, Jawa Tengah<br />
+              Telp: (0282) 539-888
+            </p>
           </div>
-          <div class="flex justify-between">
-            <span class="text-stone-400">Total Dibayar:</span>
-            <span class="font-mono font-bold text-emerald-400" id="custSuccessAmount">-</span>
+
+          <!-- Dashed Separator -->
+          <div class="border-b-2 border-dashed border-slate-300 my-2"></div>
+
+          <!-- Metadata -->
+          <div class="text-[11px] space-y-1 text-slate-700">
+            <div class="flex justify-between">
+              <span>No. Struk</span>
+              <span class="font-bold text-slate-900" id="custSuccessOrderId">RDX-998877</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Waktu Bayar</span>
+              <span id="custSuccessTimestamp">11/11/2026, 22:50 WIB</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Kasir</span>
+              <span class="font-bold">Rifqy Ridho P.</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Meja / Tamu</span>
+              <span id="custSuccessTableGuest">Meja 04 · Pelanggan</span>
+            </div>
           </div>
-          <div class="flex justify-between">
-            <span class="text-stone-400">Meja:</span>
-            <span class="font-mono text-stone-300" id="custSuccessTable">-</span>
+
+          <!-- Dashed Separator -->
+          <div class="border-b-2 border-dashed border-slate-300 my-2"></div>
+
+          <!-- Itemized Table -->
+          <div class="space-y-1.5 text-xs" id="custReceiptItemsTable">
+            <!-- Dynamically populated items -->
           </div>
-          <div class="flex justify-between">
-            <span class="text-stone-400">Status:</span>
-            <span class="font-bold text-amber-400 uppercase" id="custSuccessApp">LUNAS</span>
+
+          <!-- Dashed Separator -->
+          <div class="border-b-2 border-dashed border-slate-300 my-2"></div>
+
+          <!-- Calculation Summary -->
+          <div class="space-y-1 text-xs text-slate-700">
+            <div class="flex justify-between">
+              <span>Subtotal</span>
+              <span id="custReceiptSubtotal">Rp 0</span>
+            </div>
+            <div class="flex justify-between">
+              <span>PB1 (10%)</span>
+              <span id="custReceiptTax">Rp 0</span>
+            </div>
+            <div class="flex justify-between" id="custReceiptServiceRow">
+              <span>Service Charge (5%)</span>
+              <span id="custReceiptService">Rp 0</span>
+            </div>
+            <div class="flex justify-between text-sm font-black text-slate-950 pt-1 border-t border-slate-200">
+              <span>TOTAL DIBAYAR</span>
+              <span class="tabular-nums font-bold" id="custSuccessAmount">Rp 0</span>
+            </div>
+          </div>
+
+          <!-- Payment Method & NMID -->
+          <div class="bg-slate-100 p-2.5 rounded-lg text-[10px] space-y-0.5 text-slate-700">
+            <div class="flex justify-between font-bold text-slate-900">
+              <span>METODE PEMBAYARAN</span>
+              <span class="text-emerald-700" id="custSuccessApp">QRIS (GOPAY) - LUNAS</span>
+            </div>
+            <div class="flex justify-between">
+              <span>NMID</span>
+              <span>ID1020268884920</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Ref No.</span>
+              <span id="custSuccessRefId">RDX-TXN-998877</span>
+            </div>
+          </div>
+
+          <!-- Dashed Separator -->
+          <div class="border-b-2 border-dashed border-slate-300 my-2"></div>
+
+          <!-- WiFi & Social -->
+          <div class="text-center text-[10px] text-slate-600 space-y-0.5">
+            <p>WiFi: <strong class="text-slate-900">ridexcoffee2026</strong></p>
+            <p>Instagram: <strong class="text-slate-900">@ridexcafe.cilacap</strong></p>
+            <p class="pt-1 text-[9px] text-slate-400">
+              Terima kasih atas kunjungan Anda! Silakan duduk manis menunggu pesanan disajikan.
+            </p>
           </div>
         </div>
 
-        <div class="p-3 bg-amber-950/30 border border-amber-600/30 rounded-xl text-xs text-amber-300/90 flex items-center gap-2">
-          <i data-lucide="coffee" class="w-5 h-5 text-amber-400 shrink-0"></i>
-          <span>Pesanan Anda telah diteruskan ke Barista &amp; Dapur. Silakan duduk manis menunggu pesanan disajikan!</span>
+        <!-- Receipt Action Buttons -->
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button
+            type="button"
+            onclick="downloadCustomerReceipt()"
+            class="py-3 px-3 bg-amber-600 hover:bg-amber-500 text-stone-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-[0.98] cursor-pointer"
+          >
+            <i data-lucide="download" class="w-4 h-4 text-stone-950"></i>
+            <span>Unduh / Simpan Struk</span>
+          </button>
+
+          <button
+            type="button"
+            onclick="printCustomerReceipt()"
+            class="py-3 px-3 bg-stone-800 hover:bg-stone-750 text-stone-200 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all border border-stone-700 active:scale-[0.98] cursor-pointer"
+          >
+            <i data-lucide="printer" class="w-4 h-4 text-stone-300"></i>
+            <span>Cetak Struk (PDF)</span>
+          </button>
         </div>
 
-        <div class="pt-2 text-[11px] text-stone-500 font-mono">
-          Password WiFi: <strong class="text-stone-300">ridexcoffee2026</strong> · IG: <strong class="text-stone-300">@ridexcafe.cilacap</strong>
+        <div id="custDownloadToast" class="p-2.5 bg-emerald-900/80 border border-emerald-500 text-emerald-200 text-xs rounded-xl text-center font-medium hidden">
+          Struk digital berhasil diunduh ke ponsel Anda!
         </div>
+
+        <button
+          type="button"
+          onclick="closeCustomerPayScreen()"
+          class="w-full py-2.5 bg-transparent hover:bg-stone-900 text-stone-400 hover:text-stone-200 text-xs font-semibold rounded-xl transition-colors text-center cursor-pointer"
+        >
+          Kembali ke Menu Utama
+        </button>
       </div>
 
       <p class="text-[10px] text-stone-500 text-center font-mono">
@@ -2576,10 +2722,38 @@
       const taxable = Math.max(0, sub - disc);
       const grand = taxable + Math.round(taxable * 0.10) + Math.round(taxable * 0.05);
       const tbl = document.getElementById('tableNoInput').value || '04';
+      const custInput = document.getElementById('customerNameInput');
+      const custName = custInput && custInput.value.trim() ? custInput.value.trim() : ('Tamu Meja ' + tbl);
       currentQrisOrderId = 'RDX-' + Math.floor(100000 + Math.random() * 900000);
 
-      activeCustomerPayUrl = window.location.origin + window.location.pathname + 
-        '?mode=customer-pay&orderId=' + currentQrisOrderId + '&amount=' + grand + '&table=' + tbl;
+      const baseUrl = window.location.href.split('?')[0];
+      const compactItems = cart.map(it => ({
+        name: it.name,
+        qty: it.qty,
+        price: it.unitPrice,
+        variant: it.variant || '',
+        sugar: it.sugar || '',
+        ice: it.ice || '',
+        notes: it.notes || ''
+      }));
+      const itemsParam = encodeURIComponent(JSON.stringify(compactItems));
+
+      activeCustomerPayUrl = baseUrl + '?mode=customer-pay&orderId=' + encodeURIComponent(currentQrisOrderId) + 
+        '&amount=' + grand + '&table=' + encodeURIComponent(tbl) + 
+        '&customer=' + encodeURIComponent(custName) + '&items=' + itemsParam;
+
+      try {
+        localStorage.setItem('ridex_order_' + currentQrisOrderId, JSON.stringify({
+          orderId: currentQrisOrderId,
+          amount: grand,
+          subtotal: sub,
+          tax: Math.round(taxable * 0.10),
+          serviceCharge: Math.round(taxable * 0.05),
+          tableNumber: tbl,
+          customerName: custName,
+          items: compactItems
+        }));
+      } catch (e) {}
 
       document.getElementById('qrisOrderIdDisplay').innerText = currentQrisOrderId;
       document.getElementById('qrisAmountDisplay').innerText = formatIDR(grand);
@@ -2708,33 +2882,205 @@
       });
     }
 
+    // Enhanced Customer Pay Mode State & Logic
+    let currentCustomerPayOrder = {
+      orderId: 'RDX-998877',
+      amount: 45000,
+      table: '04',
+      customer: 'Tamu Meja 04',
+      subtotal: 39130,
+      tax: 3913,
+      serviceCharge: 1957,
+      items: []
+    };
+    let isCustPayItemsExpanded = true;
+
+    function toggleCustPayItems() {
+      playBeep(600);
+      isCustPayItemsExpanded = !isCustPayItemsExpanded;
+      const listEl = document.getElementById('custPayItemsList');
+      const textEl = document.getElementById('custPayItemsToggleText');
+      const iconEl = document.getElementById('custPayItemsToggleIcon');
+
+      if (isCustPayItemsExpanded) {
+        listEl.classList.remove('hidden');
+        textEl.innerText = 'Ciutkan';
+        iconEl.setAttribute('data-lucide', 'chevron-up');
+      } else {
+        listEl.classList.add('hidden');
+        textEl.innerText = 'Lihat Detail';
+        iconEl.setAttribute('data-lucide', 'chevron-down');
+      }
+      lucide.createIcons();
+    }
+
+    function initCustomerPayMode(urlParams) {
+      document.getElementById('loginScreen').classList.add('hidden');
+      const ws = document.getElementById('mainWorkspace');
+      if (ws) ws.classList.add('hidden');
+      document.getElementById('customerPayScreen').classList.remove('hidden');
+
+      const orderId = urlParams.get('orderId') || 'RDX-998877';
+      const amount = parseInt(urlParams.get('amount') || '45000', 10);
+      const table = urlParams.get('table') || '04';
+      const customer = urlParams.get('customer') || ('Tamu Meja ' + table);
+      const rawItems = urlParams.get('items');
+
+      let parsedItems = [];
+      if (rawItems) {
+        try {
+          const dec = JSON.parse(decodeURIComponent(rawItems));
+          if (Array.isArray(dec) && dec.length > 0) {
+            parsedItems = dec;
+          }
+        } catch (e) {}
+      }
+
+      if (parsedItems.length === 0) {
+        try {
+          const cached = localStorage.getItem('ridex_order_' + orderId);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && Array.isArray(parsed.items) && parsed.items.length > 0) {
+              parsedItems = parsed.items;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (parsedItems.length === 0) {
+        const item1Price = Math.round(amount * 0.55);
+        const item2Price = amount - item1Price;
+        parsedItems = [
+          { name: 'Ridex Signature Latte', qty: 1, price: item1Price, variant: 'Large', sugar: '50%', ice: 'Less Ice', notes: 'Extra creamy' },
+          { name: 'Butter Croissant', qty: 1, price: item2Price, variant: 'Regular', notes: 'Hangatkan sebentar' }
+        ];
+      }
+
+      const computedSubtotal = parsedItems.reduce((acc, it) => acc + (it.price * it.qty), 0);
+      const isExactBreakdown = Math.abs((computedSubtotal * 1.15) - amount) < 1000;
+      const baseSubtotal = isExactBreakdown ? computedSubtotal : Math.round(amount / 1.15);
+      const taxAmount = isExactBreakdown ? Math.round(baseSubtotal * 0.10) : Math.round((amount - baseSubtotal) * (10 / 15));
+      const serviceAmount = amount - baseSubtotal - taxAmount;
+
+      currentCustomerPayOrder = {
+        orderId,
+        amount,
+        table,
+        customer,
+        subtotal: baseSubtotal,
+        tax: taxAmount,
+        serviceCharge: serviceAmount,
+        items: parsedItems
+      };
+
+      document.getElementById('custPayOrderId').innerText = orderId;
+      document.getElementById('custPayTableNo').innerText = 'Meja ' + table;
+      document.getElementById('custPayGuestName').innerText = customer;
+      document.getElementById('custPayAmountDisplay').innerText = formatIDR(amount);
+      document.getElementById('btnCustPayText').innerText = `Konfirmasi & Bayar Sekarang (${formatIDR(amount)})`;
+
+      document.getElementById('custPaySubtotal').innerText = formatIDR(baseSubtotal);
+      document.getElementById('custPayTax').innerText = formatIDR(taxAmount);
+      const serviceRow = document.getElementById('custPayServiceRow');
+      if (serviceAmount > 0) {
+        serviceRow.classList.remove('hidden');
+        document.getElementById('custPayService').innerText = formatIDR(serviceAmount);
+      } else {
+        serviceRow.classList.add('hidden');
+      }
+
+      const totalItemsQty = parsedItems.reduce((s, i) => s + i.qty, 0);
+      document.getElementById('custPayItemsCountLabel').innerText = `Rincian Item Pesanan (${totalItemsQty} item):`;
+
+      const listContainer = document.getElementById('custPayItemsList');
+      listContainer.innerHTML = parsedItems.map(it => `
+        <div class="p-2 rounded-lg bg-stone-900/90 border border-stone-800/80 flex items-start justify-between text-xs">
+          <div class="space-y-0.5">
+            <div class="flex items-center gap-1.5">
+              <span class="px-1.5 py-0.2 bg-amber-600/20 text-amber-400 rounded text-[10px] font-bold font-mono">${it.qty}x</span>
+              <span class="font-bold text-stone-100">${it.name}</span>
+            </div>
+            ${(it.variant || it.sugar || it.ice) ? `
+              <div class="text-[10px] text-stone-400 pl-6 flex items-center gap-1 flex-wrap">
+                ${it.variant ? `<span>${it.variant}</span>` : ''}
+                ${it.sugar ? `<span>· Gula: ${it.sugar}</span>` : ''}
+                ${it.ice ? `<span>· Es: ${it.ice}</span>` : ''}
+              </div>
+            ` : ''}
+            ${it.notes ? `<p class="text-[10px] text-amber-300/80 italic pl-6">Catatan: "${it.notes}"</p>` : ''}
+          </div>
+          <span class="font-mono font-bold text-stone-200 tabular-nums shrink-0 pl-2">${formatIDR(it.price * it.qty)}</span>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
     function submitCustomerPayment() {
       playBeep(700);
       const btn = document.getElementById('btnCustConfirmPay');
       const btnText = document.getElementById('btnCustPayText');
       btn.disabled = true;
-      btnText.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Memproses Pembayaran...';
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const orderId = urlParams.get('orderId') || 'RDX-998877';
-      const amount = parseInt(urlParams.get('amount') || '45000', 10);
-      const table = urlParams.get('table') || '04';
+      btnText.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Memproses Pembayaran QRIS...';
 
       setTimeout(() => {
+        // Sensory feedback: Haptic phone vibration pulse
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            navigator.vibrate([100, 50, 150]);
+          } catch (e) {}
+        }
+
+        // Sensory feedback: Audio chime
         playBeep(1200, 0.3);
+
         document.getElementById('customerPayFormCard').classList.add('hidden');
         document.getElementById('customerPaySuccessCard').classList.remove('hidden');
 
-        document.getElementById('custSuccessOrderId').innerText = orderId;
-        document.getElementById('custSuccessAmount').innerText = formatIDR(amount);
-        document.getElementById('custSuccessTable').innerText = 'Meja ' + table;
-        document.getElementById('custSuccessApp').innerText = `LUNAS (${selectedCustAppId.toUpperCase()})`;
+        const nowStr = new Date().toLocaleString('id-ID', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        }) + ' WIB';
+
+        document.getElementById('custSuccessOrderId').innerText = currentCustomerPayOrder.orderId;
+        document.getElementById('custSuccessTimestamp').innerText = nowStr;
+        document.getElementById('custSuccessTableGuest').innerText = `Meja ${currentCustomerPayOrder.table} · ${currentCustomerPayOrder.customer}`;
+        document.getElementById('custSuccessAmount').innerText = formatIDR(currentCustomerPayOrder.amount);
+        document.getElementById('custSuccessApp').innerText = `QRIS (${selectedCustAppId.toUpperCase()}) - LUNAS`;
+        document.getElementById('custSuccessRefId').innerText = `RDX-TXN-${Date.now().toString().slice(-6)}`;
+
+        document.getElementById('custReceiptSubtotal').innerText = formatIDR(currentCustomerPayOrder.subtotal);
+        document.getElementById('custReceiptTax').innerText = formatIDR(currentCustomerPayOrder.tax);
+        const receiptServiceRow = document.getElementById('custReceiptServiceRow');
+        if (currentCustomerPayOrder.serviceCharge > 0) {
+          receiptServiceRow.classList.remove('hidden');
+          document.getElementById('custReceiptService').innerText = formatIDR(currentCustomerPayOrder.serviceCharge);
+        } else {
+          receiptServiceRow.classList.add('hidden');
+        }
+
+        // Render receipt item rows
+        const receiptTable = document.getElementById('custReceiptItemsTable');
+        receiptTable.innerHTML = currentCustomerPayOrder.items.map(it => `
+          <div class="space-y-0.5">
+            <div class="flex justify-between font-bold text-slate-900">
+              <span>${it.qty}x ${it.name}</span>
+              <span>${formatIDR(it.price * it.qty)}</span>
+            </div>
+            <div class="flex justify-between text-[10px] text-slate-500 pl-4">
+              <span>@${formatIDR(it.price)} ${it.variant ? `(${it.variant})` : ''}</span>
+            </div>
+            ${it.notes ? `<div class="text-[10px] text-amber-800 italic pl-4">"${it.notes}"</div>` : ''}
+          </div>
+        `).join('');
 
         const syncPayload = {
           type: 'QRIS_PAID',
-          orderId: orderId,
-          amount: amount,
-          table: table,
+          orderId: currentCustomerPayOrder.orderId,
+          amount: currentCustomerPayOrder.amount,
+          table: currentCustomerPayOrder.table,
+          customer: currentCustomerPayOrder.customer,
           app: selectedCustAppId,
           timestamp: Date.now()
         };
@@ -2752,25 +3098,71 @@
         } catch (e) {}
 
         lucide.createIcons();
-      }, 1000);
+      }, 1100);
     }
 
-    function initCustomerPayMode(urlParams) {
-      document.getElementById('loginScreen').classList.add('hidden');
-      const ws = document.getElementById('mainWorkspace');
-      if (ws) ws.classList.add('hidden');
-      document.getElementById('customerPayScreen').classList.remove('hidden');
+    function downloadCustomerReceipt() {
+      playBeep(800);
+      const toast = document.getElementById('custDownloadToast');
+      if (toast) {
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3000);
+      }
 
-      const orderId = urlParams.get('orderId') || 'RDX-998877';
-      const amount = parseInt(urlParams.get('amount') || '45000', 10);
-      const table = urlParams.get('table') || '04';
+      const o = currentCustomerPayOrder;
+      const receiptText = [
+        '==========================================',
+        '          RIDEX CAFE CILACAP              ',
+        '         "YOUR DAILY ESCAPE"              ',
+        '  Jl. Ahmad Yani No. 45, Cilacap, Jateng  ',
+        '          Telp: (0282) 539-888            ',
+        '==========================================',
+        `No. Struk    : ${o.orderId}`,
+        `Tanggal/Jam  : ${new Date().toLocaleString('id-ID')} WIB`,
+        `Kasir        : Rifqy Ridho P.`,
+        `Meja         : Meja ${o.table}`,
+        `Pelanggan    : ${o.customer}`,
+        '------------------------------------------',
+        'MENU PESANAN:',
+        ...o.items.map(it => `  ${it.qty}x ${it.name}\n     @${formatIDR(it.price)} = ${formatIDR(it.price * it.qty)}`),
+        '------------------------------------------',
+        `Subtotal     : ${formatIDR(o.subtotal)}`,
+        `PB1 (10%)    : ${formatIDR(o.tax)}`,
+        o.serviceCharge > 0 ? `Service (5%) : ${formatIDR(o.serviceCharge)}` : '',
+        '==========================================',
+        `TOTAL DIBAYAR: ${formatIDR(o.amount)}`,
+        `METODE       : QRIS (${selectedCustAppId.toUpperCase()}) - LUNAS`,
+        `NMID         : ID1020268884920`,
+        `Ref ID       : RDX-TXN-${Date.now().toString().slice(-6)}`,
+        '==========================================',
+        'WiFi Password: ridexcoffee2026',
+        'Instagram    : @ridexcafe.cilacap',
+        '------------------------------------------',
+        ' Terima kasih atas kunjungan Anda!         ',
+        ' Silakan duduk manis, barista kami        ',
+        ' sedang menyiapkan pesanan Anda dengan hati.',
+        '=========================================='
+      ].filter(Boolean).join('\n');
 
-      document.getElementById('custPayOrderId').innerText = orderId;
-      document.getElementById('custPayTableNo').innerText = 'Meja ' + table;
-      document.getElementById('custPayAmountDisplay').innerText = formatIDR(amount);
-      document.getElementById('btnCustPayText').innerText = `Konfirmasi & Bayar Sekarang (${formatIDR(amount)})`;
+      const blob = new Blob([receiptText], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Struk_QRIS_${o.orderId}_RidexCafe.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
 
-      lucide.createIcons();
+    function printCustomerReceipt() {
+      playBeep(700);
+      window.print();
+    }
+
+    function closeCustomerPayScreen() {
+      playBeep(600);
+      window.location.href = window.location.href.split('?')[0];
     }
 
     function updateChange() {

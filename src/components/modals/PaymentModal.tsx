@@ -68,8 +68,39 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const hasFinishedRef = useRef<boolean>(false);
 
   const customerPayUrl = useMemo(() => {
-    return `${window.location.origin}${window.location.pathname}?mode=customer-pay&orderId=${currentOrderId}&amount=${grandTotal}&table=${tableNumber || '01'}`;
-  }, [currentOrderId, grandTotal, tableNumber]);
+    const baseUrl = window.location.href.split('?')[0];
+    const tableNum = tableNumber || '01';
+    const custName = guestName || (orderType === 'dine_in' ? `Tamu Meja ${tableNum}` : 'Pelanggan');
+    const compactItems = items.map((it) => ({
+      name: it.name,
+      qty: it.quantity,
+      price: it.finalUnitPrice,
+      variant: it.size || '',
+      sugar: it.sugarLevel || '',
+      ice: it.iceLevel || '',
+      notes: it.notes || '',
+    }));
+    const itemsParam = encodeURIComponent(JSON.stringify(compactItems));
+
+    try {
+      localStorage.setItem(`ridex_order_${currentOrderId}`, JSON.stringify({
+        orderId: currentOrderId,
+        amount: grandTotal,
+        subtotal,
+        tax,
+        serviceCharge,
+        discountAmount,
+        discountLabel,
+        tableNumber: tableNum,
+        customerName: custName,
+        items: compactItems,
+      }));
+    } catch (e) {
+      // quota safeguard
+    }
+
+    return `${baseUrl}?mode=customer-pay&orderId=${encodeURIComponent(currentOrderId)}&amount=${grandTotal}&table=${encodeURIComponent(tableNum)}&customer=${encodeURIComponent(custName)}&items=${itemsParam}`;
+  }, [currentOrderId, grandTotal, tableNumber, guestName, orderType, items, subtotal, tax, serviceCharge, discountAmount, discountLabel]);
 
   useEffect(() => {
     QRCode.toDataURL(customerPayUrl, {
