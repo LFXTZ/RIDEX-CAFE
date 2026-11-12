@@ -264,7 +264,7 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] w-full bg-stone-950 text-amber-50 flex flex-col items-center justify-between p-3 sm:p-6 font-sans select-none overflow-y-auto">
+    <div className="min-h-screen min-h-[100dvh] w-full bg-stone-950 text-amber-50 flex flex-col items-center justify-between p-3 sm:p-6 pb-36 font-sans select-none overflow-y-auto">
       {/* Background ambient lighting */}
       <div className="fixed -top-24 -left-24 w-80 h-80 bg-amber-600/10 rounded-full blur-3xl pointer-events-none"></div>
       <div className="fixed -bottom-24 -right-24 w-80 h-80 bg-amber-700/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -453,11 +453,11 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
               </p>
             </div>
 
-            {/* Pay Button */}
+            {/* Optional in-card fallback button (for desktop view) */}
             <button
               onClick={handleConfirmPayment}
               disabled={isProcessing}
-              className="w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:bg-stone-800 disabled:text-stone-500 text-stone-950 font-black rounded-xl transition-all shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-base"
+              className="w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:bg-stone-800 disabled:text-stone-500 text-stone-950 font-black rounded-xl transition-all shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-base sm:flex hidden"
             >
               {isProcessing ? (
                 <>
@@ -474,18 +474,47 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
           </div>
         ) : (
           /* ============================================================== */
-          /* 2. VIEW POST-PAYMENT (INTERACTIVE DIGITAL THERMAL RECEIPT VIEW) */
+          /* 2. VIEW POST-PAYMENT (BUKTI BAYAR DIGITAL & STRUK THERMAL)     */
           /* ============================================================== */
           <div className="space-y-4 animate-fadeIn">
-            {/* Top Success Banner */}
-            <div className="bg-emerald-950/60 border border-emerald-500/50 rounded-2xl p-4 text-center space-y-1.5 shadow-xl">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-md shadow-emerald-950/40">
-                <CheckCircle2 className="w-7 h-7" />
+            {/* Bukti Pembayaran Digital Berhasil (LUNAS) */}
+            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-6 text-center space-y-4 shadow-2xl backdrop-blur-xl">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/50">
+                <CheckCircle2 className="w-10 h-10 text-emerald-400" />
               </div>
-              <h2 className="text-lg font-black text-emerald-300">Pembayaran QRIS Berhasil!</h2>
-              <p className="text-xs text-stone-300">
-                Pesanan telah diteruskan otomatis ke Barista &amp; Dapur Ridex Cafe.
-              </p>
+
+              <div className="space-y-1">
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold uppercase tracking-wider">
+                  Pembayaran Berhasil · LUNAS
+                </span>
+                <h2 className="text-xl font-black text-white pt-1">Bukti Pembayaran Digital</h2>
+                <p className="text-xs text-stone-400 max-w-xs mx-auto">
+                  Transaksi QRIS Anda telah diverifikasi otomatis oleh kasir Ridex Cafe.
+                </p>
+              </div>
+
+              <div className="bg-stone-950 p-4 rounded-xl border border-stone-800 text-left space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-stone-400">No. Tagihan:</span>
+                  <span className="font-mono font-bold text-stone-200">{orderId}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-400">ID Referensi:</span>
+                  <span className="font-mono text-amber-400 font-bold">RDX-TXN-{orderId.replace(/\D/g, '').slice(-6) || '928102'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-400">Total Nominal:</span>
+                  <span className="font-mono font-black text-emerald-400 text-base">{formatRupiah(amount)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-400">Waktu Transaksi:</span>
+                  <span className="font-mono text-stone-300">{paymentTime || formatDateTime()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-400">Metode &amp; Meja:</span>
+                  <span className="font-bold text-stone-200">QRIS ({selectedApp.toUpperCase()}) · Meja {tableNumber}</span>
+                </div>
+              </div>
             </div>
 
             {/* 100% WHITE THERMAL RECEIPT CONTAINER */}
@@ -640,6 +669,26 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
               className="w-full py-2.5 bg-transparent hover:bg-stone-900 text-stone-400 hover:text-stone-200 text-xs font-semibold rounded-xl transition-colors text-center"
             >
               Kembali ke Menu Utama
+            </button>
+          </div>
+        )}
+
+        {/* Sticky Mobile Pay Button Bar (Visible during checkout, hidden after payment) */}
+        {!isPaid && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-stone-900/95 backdrop-blur-md border-t border-stone-800 p-4 pb-6 shadow-[0_-10px_25px_rgba(0,0,0,0.8)]">
+            <button
+              onClick={handleConfirmPayment}
+              disabled={isProcessing}
+              className="w-full max-w-md mx-auto block bg-amber-600 hover:bg-amber-500 active:scale-95 text-amber-50 font-bold py-4 px-6 rounded-xl text-base shadow-lg cursor-pointer transition-all disabled:opacity-50"
+            >
+              {isProcessing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Memproses Pembayaran QRIS...</span>
+                </span>
+              ) : (
+                <span>Konfirmasi &amp; Bayar Sekarang ({formatRupiah(amount)})</span>
+              )}
             </button>
           </div>
         )}

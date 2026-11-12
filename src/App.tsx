@@ -539,15 +539,15 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [cartItems.length, isPaymentOpen, currentRole, currentUser]);
 
-  // 0. Customer QRIS Checkout Mode (?mode=customer-pay)
+  // 0. Customer QRIS Checkout Mode (?pay=1 or ?mode=customer-pay)
   const urlParams = new URLSearchParams(window.location.search);
-  const isCustomerPay = urlParams.get('mode') === 'customer-pay';
+  const isCustomerPay = urlParams.get('pay') === '1' || urlParams.get('mode') === 'customer-pay';
 
   if (isCustomerPay) {
-    const orderId = urlParams.get('orderId') || 'RDX-998877';
-    const amount = parseInt(urlParams.get('amount') || '45000', 10);
-    const tableNumber = urlParams.get('table') || '04';
-    const customerName = urlParams.get('customer') || '';
+    const orderId = urlParams.get('id') || urlParams.get('orderId') || 'RDX-998877';
+    const amount = parseInt(urlParams.get('amt') || urlParams.get('amount') || '45000', 10);
+    const tableNumber = urlParams.get('tbl') || urlParams.get('table') || '04';
+    const customerName = urlParams.get('cust') || urlParams.get('customer') || '';
     const rawItems = urlParams.get('items') || '';
 
     return (

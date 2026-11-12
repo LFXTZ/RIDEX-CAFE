@@ -228,24 +228,55 @@
           </p>
         </div>
 
-        <!-- Action Button -->
-        <button id="btnCustConfirmPay" onclick="submitCustomerPayment()" class="w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-500 text-stone-950 font-black rounded-xl transition-all shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-base">
-          <i data-lucide="shield-check" class="w-5 h-5 text-stone-950"></i>
+      </div>
+
+      <!-- Sticky Mobile Pay Button Bar (fixed bottom-0 z-50) -->
+      <div id="custStickyPayBar" class="fixed bottom-0 left-0 right-0 z-50 bg-stone-900/95 backdrop-blur-md border-t border-stone-800 p-4 pb-6 shadow-[0_-10px_25px_rgba(0,0,0,0.8)]">
+        <button id="btnCustConfirmPay" onclick="submitCustomerPayment()" class="w-full max-w-md mx-auto block bg-amber-600 hover:bg-amber-500 active:scale-95 text-amber-50 font-bold py-4 px-6 rounded-xl text-base shadow-lg cursor-pointer transition-all">
           <span id="btnCustPayText">Konfirmasi &amp; Bayar Sekarang</span>
         </button>
       </div>
 
-      <!-- Customer Post-Payment: Interactive Digital Thermal Receipt View -->
+      <!-- Customer Post-Payment: Bukti Pembayaran Digital (LUNAS) & Struk Thermal Putih -->
       <div id="customerPaySuccessCard" class="space-y-4 hidden animate-fadeIn">
-        <!-- Top Status Banner -->
-        <div class="bg-emerald-950/60 border border-emerald-500/50 rounded-2xl p-4 text-center space-y-1.5 shadow-xl">
-          <div class="w-12 h-12 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-md shadow-emerald-950/40">
-            <i data-lucide="check-circle-2" class="w-7 h-7 text-emerald-400"></i>
+        <!-- Bukti Pembayaran Digital Berhasil (LUNAS) -->
+        <div class="bg-stone-900 border border-stone-800 rounded-2xl p-6 text-center space-y-4 shadow-2xl backdrop-blur-xl">
+          <div class="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/50">
+            <i data-lucide="check-circle-2" class="w-10 h-10 text-emerald-400"></i>
           </div>
-          <h2 class="text-lg font-black text-emerald-300">Pembayaran QRIS Berhasil!</h2>
-          <p class="text-xs text-stone-300">
-            Pesanan telah diteruskan otomatis ke Barista &amp; Dapur Ridex Cafe.
-          </p>
+
+          <div class="space-y-1">
+            <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold uppercase tracking-wider">
+              Pembayaran Berhasil · LUNAS
+            </span>
+            <h2 class="text-xl font-black text-white pt-1">Bukti Pembayaran Digital</h2>
+            <p class="text-xs text-stone-400 max-w-xs mx-auto">
+              Transaksi QRIS Anda telah diverifikasi otomatis oleh kasir Ridex Cafe.
+            </p>
+          </div>
+
+          <div class="bg-stone-950 p-4 rounded-xl border border-stone-800 text-left space-y-2 text-xs">
+            <div class="flex justify-between">
+              <span class="text-stone-400">No. Tagihan:</span>
+              <span class="font-mono font-bold text-stone-200" id="custSuccessProofOrderId">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-stone-400">ID Referensi:</span>
+              <span class="font-mono text-amber-400 font-bold" id="custSuccessProofRefId">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-stone-400">Total Nominal:</span>
+              <span class="font-mono font-black text-emerald-400 text-base" id="custSuccessProofAmount">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-stone-400">Waktu Transaksi:</span>
+              <span class="font-mono text-stone-300" id="custSuccessProofTimestamp">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-stone-400">Metode &amp; Meja:</span>
+              <span class="font-bold text-stone-200" id="custSuccessProofAppTable">-</span>
+            </div>
+          </div>
         </div>
 
         <!-- 100% White Thermal Digital Receipt -->
@@ -1198,12 +1229,12 @@
         <div id="qrisSection" class="bg-stone-950 p-4 sm:p-5 rounded-2xl border border-stone-800 hidden space-y-3">
           <!-- Pending Scanning State -->
           <div id="qrisPendingBox" class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-            <!-- Dynamic Scannable QR Container -->
-            <div class="p-3 bg-white rounded-xl shadow-xl shrink-0 flex flex-col items-center border-2 border-amber-800/30">
-              <div id="qrisCodeContainer" class="w-36 h-36 flex items-center justify-center overflow-hidden">
-                <!-- QR Code generated dynamically via qrcodejs -->
+            <!-- Dynamic Scannable QR Container with Wide White Quiet Zone -->
+            <div class="bg-white p-4 rounded-2xl shadow-inner mx-auto w-fit shrink-0 flex flex-col items-center border border-stone-200">
+              <div id="qrisCodeContainer" class="w-[200px] h-[200px] flex items-center justify-center overflow-hidden">
+                <!-- ISO Standard QR Code rendered dynamically -->
               </div>
-              <span class="text-[9px] font-mono text-stone-600 font-bold mt-1">SCAN VIA SMARTPHONE</span>
+              <span class="text-[10px] font-mono text-stone-700 font-black mt-2 tracking-wider">SCAN VIA KAMERA HP</span>
             </div>
 
             <!-- QR Details & Live Polling -->
@@ -1228,15 +1259,15 @@
                 <span class="font-medium text-[11px]">Menunggu pemindaian &amp; pembayaran pelanggan...</span>
               </div>
 
-              <!-- Quick Simulation Buttons -->
-              <div class="pt-1 flex flex-wrap gap-2 justify-center sm:justify-start">
-                <button type="button" onclick="openCustomerPaySimTab()" class="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-stone-700 active:scale-95 transition-all" title="Buka Halaman Checkout Pelanggan di Tab Baru">
+              <!-- Quick Action Buttons -->
+              <div class="pt-2 flex flex-col sm:flex-row gap-2 justify-center sm:justify-start">
+                <button type="button" onclick="openCustomerPaySimTab()" class="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-stone-700 active:scale-95 transition-all cursor-pointer" title="Buka Halaman Checkout Pelanggan di Tab Baru">
                   <i data-lucide="external-link" class="w-3.5 h-3.5 text-cyan-400"></i>
-                  <span>Simulasi Scan HP Pelanggan</span>
+                  <span>Buka Halaman Bayar (Simulasi Scan)</span>
                 </button>
-                <button type="button" onclick="triggerSimulateQrisPaid()" class="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-600/40 rounded-lg text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all" title="Konfirmasi Lunas Langsung (Uji 1 Tab)">
-                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
-                  <span>Simulasi Bayar di Tab Ini</span>
+                <button type="button" onclick="triggerSimulateQrisPaid()" class="px-3 py-2 bg-amber-600 hover:bg-amber-500 text-stone-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer" title="Konfirmasi Lunas Langsung">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-950"></i>
+                  <span>Konfirmasi Pembayaran QRIS Diterima</span>
                 </button>
               </div>
             </div>
@@ -2315,7 +2346,7 @@
     // CASHIER POS LOGIC
     function init() {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('mode') === 'customer-pay') {
+      if (urlParams.get('pay') === '1' || urlParams.get('mode') === 'customer-pay') {
         initCustomerPayMode(urlParams);
         return;
       }
@@ -2726,23 +2757,37 @@
       const custName = custInput && custInput.value.trim() ? custInput.value.trim() : ('Tamu Meja ' + tbl);
       currentQrisOrderId = 'RDX-' + Math.floor(100000 + Math.random() * 900000);
 
-      const baseUrl = window.location.href.split('?')[0];
-      const compactItems = cart.map(it => ({
-        name: it.name,
-        qty: it.qty,
-        price: it.unitPrice,
-        variant: it.variant || '',
-        sugar: it.sugar || '',
-        ice: it.ice || '',
-        notes: it.notes || ''
-      }));
-      const itemsParam = encodeURIComponent(JSON.stringify(compactItems));
-
-      activeCustomerPayUrl = baseUrl + '?mode=customer-pay&orderId=' + encodeURIComponent(currentQrisOrderId) + 
-        '&amount=' + grand + '&table=' + encodeURIComponent(tbl) + 
-        '&customer=' + encodeURIComponent(custName) + '&items=' + itemsParam;
-
+      // Target Base URL Detection:
+      // If opened on real domain (http/https not localhost/127.0.0.1/googleusercontent/blob), use current origin + pathname.
+      // If on AI Studio preview, localhost, or blob, fallback to the public Vercel domain.
+      let targetBaseUrl = 'https://ridex-cafe-t2vz-eight.vercel.app/';
       try {
+        const curHost = window.location.hostname;
+        const curProto = window.location.protocol;
+        if (curProto.startsWith('http') && curHost && 
+            !curHost.includes('localhost') && 
+            !curHost.includes('127.0.0.1') && 
+            !curHost.includes('googleusercontent') && 
+            !curHost.includes('blob')) {
+          targetBaseUrl = window.location.origin + window.location.pathname;
+        }
+      } catch (e) {}
+
+      // Short URL format (?pay=1&id=...&amt=...&tbl=...)
+      const shortPayUrl = `${targetBaseUrl}?pay=1&id=${encodeURIComponent(currentQrisOrderId)}&amt=${grand}&tbl=${encodeURIComponent(tbl)}`;
+      activeCustomerPayUrl = shortPayUrl;
+
+      // Cache order details in localStorage for same-origin retrieval
+      try {
+        const compactItems = cart.map(it => ({
+          name: it.name,
+          qty: it.qty,
+          price: it.unitPrice,
+          variant: it.variant || '',
+          sugar: it.sugar || '',
+          ice: it.ice || '',
+          notes: it.notes || ''
+        }));
         localStorage.setItem('ridex_order_' + currentQrisOrderId, JSON.stringify({
           orderId: currentQrisOrderId,
           amount: grand,
@@ -2760,24 +2805,31 @@
       document.getElementById('qrisPendingBox').classList.remove('hidden');
       document.getElementById('qrisSuccessBox').classList.add('hidden');
 
+      // Render standard ISO QR Code with Wide Quiet Zone
       const qrContainer = document.getElementById('qrisCodeContainer');
       qrContainer.innerHTML = '';
-      try {
-        if (typeof QRCode !== 'undefined') {
-          new QRCode(qrContainer, {
-            text: activeCustomerPayUrl,
-            width: 140,
-            height: 140,
-            colorDark: "#140E0B",
-            colorLight: "#FFFFFF",
-            correctLevel: QRCode.CorrectLevel.M
-          });
-        } else {
-          qrContainer.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(activeCustomerPayUrl) + '" class="w-full h-full object-contain" />';
-        }
-      } catch (err) {
-        qrContainer.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(activeCustomerPayUrl) + '" class="w-full h-full object-contain" />';
-      }
+
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&ecc=L&margin=12&data=${encodeURIComponent(shortPayUrl)}`;
+      const qrImg = document.createElement('img');
+      qrImg.src = qrApiUrl;
+      qrImg.alt = "QRIS Ridex Cafe Cilacap";
+      qrImg.className = "w-full h-full object-contain block";
+      qrImg.onerror = function() {
+        qrContainer.innerHTML = '';
+        try {
+          if (typeof QRCode !== 'undefined') {
+            new QRCode(qrContainer, {
+              text: shortPayUrl,
+              width: 200,
+              height: 200,
+              colorDark: "#140E0B",
+              colorLight: "#FFFFFF",
+              correctLevel: QRCode.CorrectLevel.L
+            });
+          }
+        } catch (err) {}
+      };
+      qrContainer.appendChild(qrImg);
       lucide.createIcons();
     }
 
@@ -2915,15 +2967,19 @@
     }
 
     function initCustomerPayMode(urlParams) {
+      document.body.className = "min-h-[100dvh] w-full overflow-y-auto bg-stone-950 pb-36 text-amber-50 font-sans select-none";
       document.getElementById('loginScreen').classList.add('hidden');
       const ws = document.getElementById('mainWorkspace');
       if (ws) ws.classList.add('hidden');
       document.getElementById('customerPayScreen').classList.remove('hidden');
 
-      const orderId = urlParams.get('orderId') || 'RDX-998877';
-      const amount = parseInt(urlParams.get('amount') || '45000', 10);
-      const table = urlParams.get('table') || '04';
-      const customer = urlParams.get('customer') || ('Tamu Meja ' + table);
+      const stickyBar = document.getElementById('custStickyPayBar');
+      if (stickyBar) stickyBar.classList.remove('hidden');
+
+      const orderId = urlParams.get('id') || urlParams.get('orderId') || 'RDX-998877';
+      const amount = parseInt(urlParams.get('amt') || urlParams.get('amount') || '45000', 10);
+      const table = urlParams.get('tbl') || urlParams.get('table') || '04';
+      const customer = urlParams.get('cust') || urlParams.get('customer') || ('Tamu Meja ' + table);
       const rawItems = urlParams.get('items');
 
       let parsedItems = [];
@@ -3035,6 +3091,9 @@
         // Sensory feedback: Audio chime
         playBeep(1200, 0.3);
 
+        const stickyBar = document.getElementById('custStickyPayBar');
+        if (stickyBar) stickyBar.classList.add('hidden');
+
         document.getElementById('customerPayFormCard').classList.add('hidden');
         document.getElementById('customerPaySuccessCard').classList.remove('hidden');
 
@@ -3042,13 +3101,22 @@
           year: 'numeric', month: '2-digit', day: '2-digit',
           hour: '2-digit', minute: '2-digit', second: '2-digit'
         }) + ' WIB';
+        const refId = `RDX-TXN-${Date.now().toString().slice(-6)}`;
 
+        // Populate Digital Payment Proof Card
+        document.getElementById('custSuccessProofOrderId').innerText = currentCustomerPayOrder.orderId;
+        document.getElementById('custSuccessProofRefId').innerText = refId;
+        document.getElementById('custSuccessProofAmount').innerText = formatIDR(currentCustomerPayOrder.amount);
+        document.getElementById('custSuccessProofTimestamp').innerText = nowStr;
+        document.getElementById('custSuccessProofAppTable').innerText = `QRIS (${selectedCustAppId.toUpperCase()}) · Meja ${currentCustomerPayOrder.table}`;
+
+        // Populate White Thermal Receipt Card
         document.getElementById('custSuccessOrderId').innerText = currentCustomerPayOrder.orderId;
         document.getElementById('custSuccessTimestamp').innerText = nowStr;
         document.getElementById('custSuccessTableGuest').innerText = `Meja ${currentCustomerPayOrder.table} · ${currentCustomerPayOrder.customer}`;
         document.getElementById('custSuccessAmount').innerText = formatIDR(currentCustomerPayOrder.amount);
         document.getElementById('custSuccessApp').innerText = `QRIS (${selectedCustAppId.toUpperCase()}) - LUNAS`;
-        document.getElementById('custSuccessRefId').innerText = `RDX-TXN-${Date.now().toString().slice(-6)}`;
+        document.getElementById('custSuccessRefId').innerText = refId;
 
         document.getElementById('custReceiptSubtotal').innerText = formatIDR(currentCustomerPayOrder.subtotal);
         document.getElementById('custReceiptTax').innerText = formatIDR(currentCustomerPayOrder.tax);

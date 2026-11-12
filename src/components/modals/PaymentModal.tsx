@@ -68,7 +68,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const hasFinishedRef = useRef<boolean>(false);
 
   const customerPayUrl = useMemo(() => {
-    const baseUrl = window.location.href.split('?')[0];
+    let targetBaseUrl = 'https://ridex-cafe-t2vz-eight.vercel.app/';
+    try {
+      const curHost = window.location.hostname;
+      const curProto = window.location.protocol;
+      if (
+        curProto.startsWith('http') &&
+        curHost &&
+        !curHost.includes('localhost') &&
+        !curHost.includes('127.0.0.1') &&
+        !curHost.includes('googleusercontent') &&
+        !curHost.includes('blob')
+      ) {
+        targetBaseUrl = window.location.origin + window.location.pathname;
+      }
+    } catch (e) {}
+
     const tableNum = tableNumber || '01';
     const custName = guestName || (orderType === 'dine_in' ? `Tamu Meja ${tableNum}` : 'Pelanggan');
     const compactItems = items.map((it) => ({
@@ -80,7 +95,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       ice: it.iceLevel || '',
       notes: it.notes || '',
     }));
-    const itemsParam = encodeURIComponent(JSON.stringify(compactItems));
 
     try {
       localStorage.setItem(`ridex_order_${currentOrderId}`, JSON.stringify({
@@ -99,20 +113,30 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       // quota safeguard
     }
 
-    return `${baseUrl}?mode=customer-pay&orderId=${encodeURIComponent(currentOrderId)}&amount=${grandTotal}&table=${encodeURIComponent(tableNum)}&customer=${encodeURIComponent(custName)}&items=${itemsParam}`;
+    return `${targetBaseUrl}?pay=1&id=${encodeURIComponent(currentOrderId)}&amt=${grandTotal}&tbl=${encodeURIComponent(tableNum)}`;
   }, [currentOrderId, grandTotal, tableNumber, guestName, orderType, items, subtotal, tax, serviceCharge, discountAmount, discountLabel]);
 
   useEffect(() => {
-    QRCode.toDataURL(customerPayUrl, {
-      width: 240,
-      margin: 1,
-      color: {
-        dark: '#140E0B',
-        light: '#FFFFFF',
-      },
-    })
-      .then((url) => setQrDataUrl(url))
-      .catch((err) => console.error('Failed to generate QR code', err));
+    // Generate ISO standard QR with low error correction level L and quiet zone margin
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&ecc=L&margin=12&data=${encodeURIComponent(customerPayUrl)}`;
+    
+    // Test if image loads or fallback to QRCode canvas data URL
+    const img = new Image();
+    img.onload = () => setQrDataUrl(qrApiUrl);
+    img.onerror = () => {
+      QRCode.toDataURL(customerPayUrl, {
+        width: 220,
+        margin: 2,
+        errorCorrectionLevel: 'L',
+        color: {
+          dark: '#140E0B',
+          light: '#FFFFFF',
+        },
+      })
+        .then((url) => setQrDataUrl(url))
+        .catch((err) => console.error('Failed to generate fallback QR code', err));
+    };
+    img.src = qrApiUrl;
   }, [customerPayUrl]);
 
   // Sync listener: BroadcastChannel and localStorage
@@ -438,20 +462,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     </div>
                   ) : (
                     <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                      {/* Dynamic Scannable QR Code */}
-                      <div className="p-3 bg-white rounded-xl shadow-xl shrink-0 flex flex-col items-center border-2 border-amber-800/30">
+                      {/* Dynamic Scannable QR Code with Quiet Zone */}
+                      <div className="bg-white p-4 rounded-2xl shadow-inner mx-auto w-fit shrink-0 flex flex-col items-center border border-stone-200">
                         {qrDataUrl ? (
                           <img
                             src={qrDataUrl}
                             alt="QRIS Dinamis Ridex Cafe"
-                            className="w-36 h-36 object-contain"
+                            className="w-[200px] h-[200px] object-contain block"
                           />
                         ) : (
-                          <div className="w-36 h-36 flex items-center justify-center bg-stone-100 text-stone-500 text-xs">
-                            Membuat QR...
+                          <div className="w-[200px] h-[200px] flex items-center justify-center bg-stone-100 text-stone-500 text-xs">
+                            Membuat QR ISO...
                           </div>
                         )}
-                        <span className="text-[9px] font-mono text-stone-600 font-bold mt-1">SCAN VIA SMARTPHONE</span>
+                        <span className="text-[10px] font-mono text-stone-700 font-black mt-2 tracking-wider">
+                          SCAN VIA KAMERA HP
+                        </span>
                       </div>
 
                       {/* QRIS Merchant & Live Polling Info */}
@@ -476,19 +502,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                           <span className="font-medium text-[11px]">Menunggu pemindaian &amp; pembayaran pelanggan...</span>
                         </div>
 
-                        {/* Quick Test Buttons */}
-                        <div className="pt-1 flex flex-wrap gap-2 justify-center sm:justify-start">
+                        {/* Quick Action Buttons */}
+                        <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center sm:justify-start">
                           <button
                             type="button"
                             onClick={() => {
                               soundManager.playClick();
                               window.open(customerPayUrl, '_blank');
                             }}
-                            className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-stone-700 active:scale-95 transition-all"
+                            className="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-stone-700 active:scale-95 transition-all cursor-pointer"
                             title="Buka Halaman Checkout Pelanggan di Tab Baru"
                           >
                             <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
-                            <span>Simulasi Scan HP Pelanggan</span>
+                            <span>Buka Halaman Bayar (Simulasi Scan)</span>
                           </button>
 
                           <button
@@ -514,11 +540,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                                 localStorage.setItem('ridex_last_qris_paid', JSON.stringify(fakePayload));
                               } catch (e) {}
                             }}
-                            className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-600/40 rounded-lg text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all"
-                            title="Konfirmasi Lunas Langsung (Uji 1 Tab)"
+                            className="px-3 py-2 bg-amber-600 hover:bg-amber-500 text-stone-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                            title="Konfirmasi Pembayaran QRIS Diterima"
                           >
-                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                            <span>Simulasi Bayar di Tab Ini</span>
+                            <Sparkles className="w-3.5 h-3.5 text-stone-950" />
+                            <span>Konfirmasi Pembayaran QRIS Diterima</span>
                           </button>
                         </div>
                       </div>
