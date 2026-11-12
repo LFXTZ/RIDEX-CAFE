@@ -37,6 +37,8 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- QRCode.js Library for Real Scannable QR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
@@ -54,6 +56,189 @@
   </style>
 </head>
 <body class="bg-stone-950 text-amber-50 antialiased select-none overflow-hidden h-screen h-[100dvh] max-h-[100dvh] w-screen flex flex-col">
+
+  <!-- ======================================================== -->
+  <!-- 0. HALAMAN CHECKOUT QRIS PELANGGAN (?mode=customer-pay)  -->
+  <!-- ======================================================== -->
+  <div id="customerPayScreen" class="fixed inset-0 z-50 min-h-screen min-h-[100dvh] w-full flex items-center justify-center p-4 overflow-y-auto bg-stone-950 select-none hidden">
+    <!-- Glowing background blurs -->
+    <div class="fixed -top-32 -left-32 w-96 h-96 bg-amber-600/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="fixed -bottom-32 -right-32 w-96 h-96 bg-amber-700/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="w-full max-w-md my-auto relative z-10 flex flex-col space-y-4">
+      <!-- Brand Header -->
+      <div class="text-center flex flex-col items-center space-y-2">
+        <div class="w-16 h-16 rounded-2xl bg-[#f5ede4] p-1.5 shadow-xl border border-amber-800/30 flex items-center justify-center overflow-hidden">
+          <img src="/assets/aistudio/extra-large_4af77947.png" alt="Ridex Cafe Mascot Logo" class="w-full h-full object-contain" />
+        </div>
+        <div>
+          <h1 class="text-xl font-black tracking-tight text-white uppercase font-sans">RIDEX CAFE</h1>
+          <p class="text-[10px] font-bold tracking-widest text-amber-400 uppercase">YOUR DAILY ESCAPE</p>
+          <p class="text-xs text-stone-400 mt-0.5">Outlet Cilacap, Jawa Tengah · Jl. Ahmad Yani No. 45</p>
+        </div>
+      </div>
+
+      <!-- Customer Checkout Form Container -->
+      <div id="customerPayFormCard" class="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-2xl space-y-4 backdrop-blur-xl">
+        <div class="flex items-center justify-between pb-3 border-b border-stone-800">
+          <span class="text-xs font-bold text-stone-200 flex items-center gap-1.5">
+            <i data-lucide="smartphone" class="w-4 h-4 text-cyan-400"></i>
+            <span>Portal Checkout QRIS Pelanggan</span>
+          </span>
+          <span class="text-[10px] px-2 py-0.5 bg-rose-600/20 text-rose-300 border border-rose-500/30 rounded font-black tracking-wider uppercase">
+            QRIS Dinamis
+          </span>
+        </div>
+
+        <!-- Order Bill Summary -->
+        <div class="bg-stone-950 p-4 rounded-xl border border-stone-800/90 space-y-2.5">
+          <div class="flex items-center justify-between text-xs text-stone-400">
+            <span>No. Tagihan Pesanan:</span>
+            <span class="font-mono font-bold text-stone-200" id="custPayOrderId">RDX-998877</span>
+          </div>
+          <div class="flex items-center justify-between text-xs text-stone-400">
+            <span>Lokasi Meja:</span>
+            <span class="px-2 py-0.5 rounded bg-amber-950/60 border border-amber-600/40 text-amber-300 font-mono font-bold text-xs" id="custPayTableNo">
+              Meja 04
+            </span>
+          </div>
+          <div class="pt-2 border-t border-stone-800/80 flex items-center justify-between">
+            <div>
+              <span class="text-xs text-stone-400 block font-medium">Total yang Harus Dibayar:</span>
+              <span class="text-[10px] text-stone-500">Termasuk PB1 10% &amp; Service 5%</span>
+            </div>
+            <span class="text-2xl font-black font-mono text-amber-400 tabular-nums" id="custPayAmountDisplay">
+              Rp 0
+            </span>
+          </div>
+        </div>
+
+        <!-- Payment App Selector Grid -->
+        <div class="space-y-2">
+          <label class="text-xs font-semibold text-stone-300 block">
+            Pilih Aplikasi Pembayaran Anda:
+          </label>
+          <div class="grid grid-cols-2 gap-2" id="custPaymentAppGrid">
+            <button type="button" onclick="selectCustApp('GoPay')" class="cust-app-btn p-2.5 rounded-xl border border-amber-500 bg-amber-600/15 shadow-md shadow-amber-950/50 text-left flex flex-col justify-between transition-all" data-app="GoPay">
+              <div class="flex items-center justify-between w-full">
+                <span class="text-xs font-bold text-stone-200">GoPay</span>
+                <div class="w-3.5 h-3.5 rounded-full border border-amber-500 bg-amber-500 flex items-center justify-center">
+                  <div class="w-1.5 h-1.5 rounded-full bg-stone-950"></div>
+                </div>
+              </div>
+              <span class="text-[10px] text-stone-400 mt-1">E-Wallet</span>
+            </button>
+
+            <button type="button" onclick="selectCustApp('OVO')" class="cust-app-btn p-2.5 rounded-xl border border-stone-800 bg-stone-950/80 hover:bg-stone-800/70 text-left flex flex-col justify-between transition-all" data-app="OVO">
+              <div class="flex items-center justify-between w-full">
+                <span class="text-xs font-bold text-stone-200">OVO</span>
+                <div class="w-3.5 h-3.5 rounded-full border border-stone-600 flex items-center justify-center"></div>
+              </div>
+              <span class="text-[10px] text-stone-400 mt-1">E-Wallet</span>
+            </button>
+
+            <button type="button" onclick="selectCustApp('DANA')" class="cust-app-btn p-2.5 rounded-xl border border-stone-800 bg-stone-950/80 hover:bg-stone-800/70 text-left flex flex-col justify-between transition-all" data-app="DANA">
+              <div class="flex items-center justify-between w-full">
+                <span class="text-xs font-bold text-stone-200">DANA</span>
+                <div class="w-3.5 h-3.5 rounded-full border border-stone-600 flex items-center justify-center"></div>
+              </div>
+              <span class="text-[10px] text-stone-400 mt-1">E-Wallet</span>
+            </button>
+
+            <button type="button" onclick="selectCustApp('ShopeePay')" class="cust-app-btn p-2.5 rounded-xl border border-stone-800 bg-stone-950/80 hover:bg-stone-800/70 text-left flex flex-col justify-between transition-all" data-app="ShopeePay">
+              <div class="flex items-center justify-between w-full">
+                <span class="text-xs font-bold text-stone-200">ShopeePay</span>
+                <div class="w-3.5 h-3.5 rounded-full border border-stone-600 flex items-center justify-center"></div>
+              </div>
+              <span class="text-[10px] text-stone-400 mt-1">E-Wallet</span>
+            </button>
+
+            <button type="button" onclick="selectCustApp('BCA Mobile')" class="cust-app-btn p-2.5 rounded-xl border border-stone-800 bg-stone-950/80 hover:bg-stone-800/70 text-left flex flex-col justify-between transition-all" data-app="BCA Mobile">
+              <div class="flex items-center justify-between w-full">
+                <span class="text-xs font-bold text-stone-200">BCA Mobile</span>
+                <div class="w-3.5 h-3.5 rounded-full border border-stone-600 flex items-center justify-center"></div>
+              </div>
+              <span class="text-[10px] text-stone-400 mt-1">Mobile Banking</span>
+            </button>
+
+            <button type="button" onclick="selectCustApp('Mandiri Livin')" class="cust-app-btn p-2.5 rounded-xl border border-stone-800 bg-stone-950/80 hover:bg-stone-800/70 text-left flex flex-col justify-between transition-all" data-app="Mandiri Livin">
+              <div class="flex items-center justify-between w-full">
+                <span class="text-xs font-bold text-stone-200">Mandiri Livin</span>
+                <div class="w-3.5 h-3.5 rounded-full border border-stone-600 flex items-center justify-center"></div>
+              </div>
+              <span class="text-[10px] text-stone-400 mt-1">Mobile Banking</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Merchant Security Note -->
+        <div class="p-3 rounded-xl bg-stone-950/60 border border-stone-800/80 text-[11px] text-stone-400 space-y-1">
+          <div class="flex items-center justify-between text-[10px]">
+            <span>Merchant: <strong>RIDEX CAFE CILACAP</strong></span>
+            <span class="font-mono text-stone-400">NMID: ID1020268884920</span>
+          </div>
+          <p class="text-[10px] text-stone-400 leading-tight">
+            Pembayaran dilindungi enkripsi standar Bank Indonesia (QRIS ASPI).
+          </p>
+        </div>
+
+        <!-- Action Button -->
+        <button id="btnCustConfirmPay" onclick="submitCustomerPayment()" class="w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-500 text-stone-950 font-black rounded-xl transition-all shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-base">
+          <i data-lucide="shield-check" class="w-5 h-5 text-stone-950"></i>
+          <span id="btnCustPayText">Konfirmasi &amp; Bayar Sekarang</span>
+        </button>
+      </div>
+
+      <!-- Customer Payment Success Card -->
+      <div id="customerPaySuccessCard" class="bg-stone-900 border border-stone-800 rounded-2xl p-6 shadow-2xl text-center space-y-5 hidden backdrop-blur-xl">
+        <div class="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/50">
+          <i data-lucide="check-circle-2" class="w-10 h-10"></i>
+        </div>
+
+        <div class="space-y-1">
+          <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold uppercase tracking-wider">
+            Pembayaran Berhasil!
+          </span>
+          <h2 class="text-xl font-black text-white pt-1">Terima Kasih!</h2>
+          <p class="text-xs text-stone-400 max-w-xs mx-auto">
+            Transaksi QRIS Anda telah diverifikasi otomatis oleh kasir Ridex Cafe.
+          </p>
+        </div>
+
+        <div class="bg-stone-950 p-4 rounded-xl border border-stone-800 text-left space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-stone-400">No. Transaksi:</span>
+            <span class="font-mono font-bold text-stone-200" id="custSuccessOrderId">-</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-stone-400">Total Dibayar:</span>
+            <span class="font-mono font-bold text-emerald-400" id="custSuccessAmount">-</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-stone-400">Meja:</span>
+            <span class="font-mono text-stone-300" id="custSuccessTable">-</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-stone-400">Status:</span>
+            <span class="font-bold text-amber-400 uppercase" id="custSuccessApp">LUNAS</span>
+          </div>
+        </div>
+
+        <div class="p-3 bg-amber-950/30 border border-amber-600/30 rounded-xl text-xs text-amber-300/90 flex items-center gap-2">
+          <i data-lucide="coffee" class="w-5 h-5 text-amber-400 shrink-0"></i>
+          <span>Pesanan Anda telah diteruskan ke Barista &amp; Dapur. Silakan duduk manis menunggu pesanan disajikan!</span>
+        </div>
+
+        <div class="pt-2 text-[11px] text-stone-500 font-mono">
+          Password WiFi: <strong class="text-stone-300">ridexcoffee2026</strong> · IG: <strong class="text-stone-300">@ridexcafe.cilacap</strong>
+        </div>
+      </div>
+
+      <p class="text-[10px] text-stone-500 text-center font-mono">
+        Powered by Loka POS Engine · Ridex Cafe QRIS Integration
+      </p>
+    </div>
+  </div>
 
   <!-- ========================================== -->
   <!-- 1. LAMAN LOGIN UTAMA (INITIAL VIEW)        -->
@@ -863,13 +1048,71 @@
           </div>
         </div>
 
-        <div id="qrisSection" class="bg-stone-950 p-4 rounded-xl border border-stone-800 hidden flex items-center gap-4">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=RIDEX_CAFE_CILACAP_QRIS" class="w-24 h-24 bg-white p-1.5 rounded-lg" alt="QRIS">
-          <div class="text-xs space-y-1">
-            <span class="bg-rose-600 text-white font-bold px-1.5 py-0.5 rounded text-[10px]">QRIS</span>
-            <span class="font-bold text-stone-200 block">RIDEX CAFE CILACAP</span>
-            <span class="text-[10px] text-stone-400 font-mono">NMID: ID1020268884920</span>
-            <p class="text-stone-400 text-[11px]">Dapat dipindai dari BCA, Mandiri, GoPay, OVO, ShopeePay.</p>
+        <!-- Dynamic Scannable QRIS Section with Live Polling -->
+        <div id="qrisSection" class="bg-stone-950 p-4 sm:p-5 rounded-2xl border border-stone-800 hidden space-y-3">
+          <!-- Pending Scanning State -->
+          <div id="qrisPendingBox" class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+            <!-- Dynamic Scannable QR Container -->
+            <div class="p-3 bg-white rounded-xl shadow-xl shrink-0 flex flex-col items-center border-2 border-amber-800/30">
+              <div id="qrisCodeContainer" class="w-36 h-36 flex items-center justify-center overflow-hidden">
+                <!-- QR Code generated dynamically via qrcodejs -->
+              </div>
+              <span class="text-[9px] font-mono text-stone-600 font-bold mt-1">SCAN VIA SMARTPHONE</span>
+            </div>
+
+            <!-- QR Details & Live Polling -->
+            <div class="space-y-2 flex-1">
+              <div class="flex items-center justify-center sm:justify-start gap-2">
+                <span class="px-2 py-0.5 rounded bg-rose-600 text-[10px] font-black text-white tracking-widest uppercase">
+                  QRIS
+                </span>
+                <span class="text-xs font-bold text-stone-200">RIDEX CAFE CILACAP</span>
+              </div>
+              <div class="text-xs text-stone-400 font-mono">
+                NMID: <strong class="text-stone-300">ID1020268884920</strong> · No: <strong id="qrisOrderIdDisplay" class="text-amber-400">RDX-001</strong>
+              </div>
+              <div class="p-2.5 rounded-lg bg-stone-900 border border-stone-800 flex items-center justify-between">
+                <span class="text-xs text-stone-400">Total Tagihan:</span>
+                <span class="text-lg font-mono font-bold text-amber-400" id="qrisAmountDisplay">Rp 0</span>
+              </div>
+
+              <!-- Live Polling Indicator -->
+              <div class="flex items-center justify-center sm:justify-start gap-2 text-xs text-amber-400 bg-amber-950/40 border border-amber-600/30 px-3 py-1.5 rounded-xl">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                <span class="font-medium text-[11px]">Menunggu pemindaian &amp; pembayaran pelanggan...</span>
+              </div>
+
+              <!-- Quick Simulation Buttons -->
+              <div class="pt-1 flex flex-wrap gap-2 justify-center sm:justify-start">
+                <button type="button" onclick="openCustomerPaySimTab()" class="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-stone-700 active:scale-95 transition-all" title="Buka Halaman Checkout Pelanggan di Tab Baru">
+                  <i data-lucide="external-link" class="w-3.5 h-3.5 text-cyan-400"></i>
+                  <span>Simulasi Scan HP Pelanggan</span>
+                </button>
+                <button type="button" onclick="triggerSimulateQrisPaid()" class="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-600/40 rounded-lg text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all" title="Konfirmasi Lunas Langsung (Uji 1 Tab)">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+                  <span>Simulasi Bayar di Tab Ini</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Paid Success State within Cashier Modal -->
+          <div id="qrisSuccessBox" class="bg-emerald-950/50 border border-emerald-500/50 rounded-xl p-5 text-center space-y-2 hidden animate-fadeIn">
+            <div class="w-12 h-12 rounded-full bg-emerald-500/20 border-2 border-emerald-400 text-emerald-400 flex items-center justify-center mx-auto">
+              <i data-lucide="check-circle-2" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                Pembayaran QRIS Berhasil Diterima!
+              </span>
+              <h4 class="text-base font-black text-white mt-0.5" id="qrisSuccessAppText">Lunas via GoPay</h4>
+              <p class="text-xs text-stone-300 font-mono mt-1" id="qrisSuccessDetailText">
+                Nominal: Rp 0 · Meja 04
+              </p>
+            </div>
+            <div class="text-[11px] text-emerald-300/80 animate-pulse pt-1">
+              Menyimpan transaksi dan mencetak struk kasir...
+            </div>
           </div>
         </div>
       </div>
@@ -1925,6 +2168,13 @@
 
     // CASHIER POS LOGIC
     function init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('mode') === 'customer-pay') {
+        initCustomerPayMode(urlParams);
+        return;
+      }
+      setupQrisSyncListener();
+
       renderCategoryTabs();
       renderCatalog();
       renderCart();
@@ -2302,11 +2552,225 @@
       closeModal();
     }
 
+    let currentQrisOrderId = 'RDX-' + Math.floor(100000 + Math.random() * 900000);
+    let activeCustomerPayUrl = '';
+    let isQrisPaidCompleted = false;
+
     function setPayMethod(m) {
       playBeep(800);
       payMethod = m;
       document.getElementById('cashSection').style.display = m === 'cash' ? 'block' : 'none';
-      document.getElementById('qrisSection').style.display = m === 'qris' ? 'flex' : 'none';
+      const qrisSec = document.getElementById('qrisSection');
+      if (m === 'qris') {
+        qrisSec.classList.remove('hidden');
+        renderDynamicQRIS();
+      } else {
+        qrisSec.classList.add('hidden');
+      }
+    }
+
+    function renderDynamicQRIS() {
+      isQrisPaidCompleted = false;
+      const sub = cart.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+      const disc = Math.round((sub * selectedDiscountPercent) / 100);
+      const taxable = Math.max(0, sub - disc);
+      const grand = taxable + Math.round(taxable * 0.10) + Math.round(taxable * 0.05);
+      const tbl = document.getElementById('tableNoInput').value || '04';
+      currentQrisOrderId = 'RDX-' + Math.floor(100000 + Math.random() * 900000);
+
+      activeCustomerPayUrl = window.location.origin + window.location.pathname + 
+        '?mode=customer-pay&orderId=' + currentQrisOrderId + '&amount=' + grand + '&table=' + tbl;
+
+      document.getElementById('qrisOrderIdDisplay').innerText = currentQrisOrderId;
+      document.getElementById('qrisAmountDisplay').innerText = formatIDR(grand);
+      document.getElementById('qrisPendingBox').classList.remove('hidden');
+      document.getElementById('qrisSuccessBox').classList.add('hidden');
+
+      const qrContainer = document.getElementById('qrisCodeContainer');
+      qrContainer.innerHTML = '';
+      try {
+        if (typeof QRCode !== 'undefined') {
+          new QRCode(qrContainer, {
+            text: activeCustomerPayUrl,
+            width: 140,
+            height: 140,
+            colorDark: "#140E0B",
+            colorLight: "#FFFFFF",
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        } else {
+          qrContainer.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(activeCustomerPayUrl) + '" class="w-full h-full object-contain" />';
+        }
+      } catch (err) {
+        qrContainer.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(activeCustomerPayUrl) + '" class="w-full h-full object-contain" />';
+      }
+      lucide.createIcons();
+    }
+
+    function openCustomerPaySimTab() {
+      playBeep(700);
+      if (activeCustomerPayUrl) {
+        window.open(activeCustomerPayUrl, '_blank');
+      }
+    }
+
+    function triggerSimulateQrisPaid() {
+      playBeep(1000);
+      const sub = cart.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+      const disc = Math.round((sub * selectedDiscountPercent) / 100);
+      const taxable = Math.max(0, sub - disc);
+      const grand = taxable + Math.round(taxable * 0.10) + Math.round(taxable * 0.05);
+      const tbl = document.getElementById('tableNoInput').value || '04';
+
+      const payload = {
+        type: 'QRIS_PAID',
+        orderId: currentQrisOrderId,
+        amount: grand,
+        table: tbl,
+        app: 'BCA Mobile',
+        timestamp: Date.now()
+      };
+
+      if ('BroadcastChannel' in window) {
+        try {
+          const bc = new BroadcastChannel('ridex_qris_sync');
+          bc.postMessage(payload);
+          setTimeout(() => bc.close(), 500);
+        } catch (e) {}
+      }
+      try {
+        localStorage.setItem('ridex_last_qris_paid', JSON.stringify(payload));
+      } catch (e) {}
+
+      onQrisPaymentVerified(payload);
+    }
+
+    function onQrisPaymentVerified(data) {
+      if (isQrisPaidCompleted) return;
+      isQrisPaidCompleted = true;
+      playBeep(1200, 0.3);
+
+      const successBox = document.getElementById('qrisSuccessBox');
+      const pendingBox = document.getElementById('qrisPendingBox');
+      if (successBox && pendingBox) {
+        pendingBox.classList.add('hidden');
+        successBox.classList.remove('hidden');
+        document.getElementById('qrisSuccessAppText').innerText = `Lunas via ${data.app || 'GoPay'}`;
+        document.getElementById('qrisSuccessDetailText').innerText = `Nominal: ${formatIDR(data.amount)} · Meja ${data.table || '04'}`;
+      }
+
+      setTimeout(() => {
+        completePaymentTransaction('qris');
+      }, 1200);
+    }
+
+    function setupQrisSyncListener() {
+      if ('BroadcastChannel' in window) {
+        try {
+          const bc = new BroadcastChannel('ridex_qris_sync');
+          bc.onmessage = (event) => {
+            if (event.data && event.data.type === 'QRIS_PAID') {
+              onQrisPaymentVerified(event.data);
+            }
+          };
+        } catch (e) {}
+      }
+
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'ridex_last_qris_paid' && e.newValue) {
+          try {
+            const data = JSON.parse(e.newValue);
+            if (data && data.type === 'QRIS_PAID') {
+              onQrisPaymentVerified(data);
+            }
+          } catch (err) {}
+        }
+      });
+    }
+
+    // Customer Pay Mode Logic
+    let selectedCustAppId = 'GoPay';
+    function selectCustApp(app) {
+      playBeep(600);
+      selectedCustAppId = app;
+      const btns = document.querySelectorAll('.cust-app-btn');
+      btns.forEach(btn => {
+        const isMatch = btn.getAttribute('data-app') === app;
+        if (isMatch) {
+          btn.className = 'cust-app-btn p-2.5 rounded-xl border border-amber-500 bg-amber-600/15 shadow-md shadow-amber-950/50 text-left flex flex-col justify-between transition-all';
+          btn.querySelector('.rounded-full.border').className = 'w-3.5 h-3.5 rounded-full border border-amber-500 bg-amber-500 flex items-center justify-center';
+          btn.querySelector('.rounded-full.border').innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-stone-950"></div>';
+        } else {
+          btn.className = 'cust-app-btn p-2.5 rounded-xl border border-stone-800 bg-stone-950/80 hover:bg-stone-800/70 text-left flex flex-col justify-between transition-all';
+          btn.querySelector('.rounded-full.border').className = 'w-3.5 h-3.5 rounded-full border border-stone-600 flex items-center justify-center';
+          btn.querySelector('.rounded-full.border').innerHTML = '';
+        }
+      });
+    }
+
+    function submitCustomerPayment() {
+      playBeep(700);
+      const btn = document.getElementById('btnCustConfirmPay');
+      const btnText = document.getElementById('btnCustPayText');
+      btn.disabled = true;
+      btnText.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Memproses Pembayaran...';
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderId = urlParams.get('orderId') || 'RDX-998877';
+      const amount = parseInt(urlParams.get('amount') || '45000', 10);
+      const table = urlParams.get('table') || '04';
+
+      setTimeout(() => {
+        playBeep(1200, 0.3);
+        document.getElementById('customerPayFormCard').classList.add('hidden');
+        document.getElementById('customerPaySuccessCard').classList.remove('hidden');
+
+        document.getElementById('custSuccessOrderId').innerText = orderId;
+        document.getElementById('custSuccessAmount').innerText = formatIDR(amount);
+        document.getElementById('custSuccessTable').innerText = 'Meja ' + table;
+        document.getElementById('custSuccessApp').innerText = `LUNAS (${selectedCustAppId.toUpperCase()})`;
+
+        const syncPayload = {
+          type: 'QRIS_PAID',
+          orderId: orderId,
+          amount: amount,
+          table: table,
+          app: selectedCustAppId,
+          timestamp: Date.now()
+        };
+
+        if ('BroadcastChannel' in window) {
+          try {
+            const bc = new BroadcastChannel('ridex_qris_sync');
+            bc.postMessage(syncPayload);
+            setTimeout(() => bc.close(), 1000);
+          } catch (e) {}
+        }
+
+        try {
+          localStorage.setItem('ridex_last_qris_paid', JSON.stringify(syncPayload));
+        } catch (e) {}
+
+        lucide.createIcons();
+      }, 1000);
+    }
+
+    function initCustomerPayMode(urlParams) {
+      document.getElementById('loginScreen').classList.add('hidden');
+      const ws = document.getElementById('mainWorkspace');
+      if (ws) ws.classList.add('hidden');
+      document.getElementById('customerPayScreen').classList.remove('hidden');
+
+      const orderId = urlParams.get('orderId') || 'RDX-998877';
+      const amount = parseInt(urlParams.get('amount') || '45000', 10);
+      const table = urlParams.get('table') || '04';
+
+      document.getElementById('custPayOrderId').innerText = orderId;
+      document.getElementById('custPayTableNo').innerText = 'Meja ' + table;
+      document.getElementById('custPayAmountDisplay').innerText = formatIDR(amount);
+      document.getElementById('btnCustPayText').innerText = `Konfirmasi & Bayar Sekarang (${formatIDR(amount)})`;
+
+      lucide.createIcons();
     }
 
     function updateChange() {
@@ -2331,7 +2795,8 @@
       updateChange();
     }
 
-    function completePaymentTransaction() {
+    function completePaymentTransaction(overrideMethod) {
+      if (overrideMethod) payMethod = overrideMethod;
       playBeep(1200, 0.2);
       const sub = cart.reduce((s, i) => s + i.unitPrice * i.qty, 0);
       const disc = Math.round((sub * selectedDiscountPercent) / 100);

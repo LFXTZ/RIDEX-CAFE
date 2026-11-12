@@ -22,6 +22,7 @@ import { HistoryModal } from './components/modals/HistoryModal';
 import { BarcodeScannerModal } from './components/modals/BarcodeScannerModal';
 import { EditMenuModal } from './components/modals/EditMenuModal';
 import { LogoutConfirmModal } from './components/modals/LogoutConfirmModal';
+import { CustomerPayScreen } from './components/CustomerPayScreen';
 
 import { 
   Product, 
@@ -537,6 +538,24 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [cartItems.length, isPaymentOpen, currentRole, currentUser]);
+
+  // 0. Customer QRIS Checkout Mode (?mode=customer-pay)
+  const urlParams = new URLSearchParams(window.location.search);
+  const isCustomerPay = urlParams.get('mode') === 'customer-pay';
+
+  if (isCustomerPay) {
+    const orderId = urlParams.get('orderId') || 'RDX-998877';
+    const amount = parseInt(urlParams.get('amount') || '45000', 10);
+    const tableNumber = urlParams.get('table') || '04';
+
+    return (
+      <CustomerPayScreen
+        orderId={orderId}
+        amount={amount}
+        tableNumber={tableNumber}
+      />
+    );
+  }
 
   // 1. If not logged in -> SHOW AUTHENTICATION LOGIN CARD
   if (!currentUser) {

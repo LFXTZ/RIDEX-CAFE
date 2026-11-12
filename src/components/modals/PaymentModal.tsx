@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import QRCode from 'qrcode';
 import { 
   X, 
   Banknote, 
@@ -9,7 +10,11 @@ import {
   ArrowRight,
   AlertCircle,
   Copy,
-  Receipt
+  Receipt,
+  ExternalLink,
+  Smartphone,
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import { CartItem, CompletedOrder, OrderType, PaymentMethod, PaymentRecord } from '../../types/pos';
 import { formatRupiah, generateOrderNumber, formatDateTime } from '../../utils/formatters';
@@ -55,6 +60,74 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [splitFirstAmount, setSplitFirstAmount] = useState<number>(Math.round(grandTotal / 2));
   const [splitSecondMethod, setSplitSecondMethod] = useState<PaymentMethod>('qris');
 
+  // Dynamic QRIS & Customer checkout link
+  const [currentOrderId] = useState<string>(() => 'RDX-' + Math.floor(100000 + Math.random() * 900000));
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const [qrisPaidStatus, setQrisPaidStatus] = useState<boolean>(false);
+  const [qrisPaidApp, setQrisPaidApp] = useState<string>('');
+  const hasFinishedRef = useRef<boolean>(false);
+
+  const customerPayUrl = useMemo(() => {
+    return `${window.location.origin}${window.location.pathname}?mode=customer-pay&orderId=${currentOrderId}&amount=${grandTotal}&table=${tableNumber || '01'}`;
+  }, [currentOrderId, grandTotal, tableNumber]);
+
+  useEffect(() => {
+    QRCode.toDataURL(customerPayUrl, {
+      width: 240,
+      margin: 1,
+      color: {
+        dark: '#140E0B',
+        light: '#FFFFFF',
+      },
+    })
+      .then((url) => setQrDataUrl(url))
+      .catch((err) => console.error('Failed to generate QR code', err));
+  }, [customerPayUrl]);
+
+  // Sync listener: BroadcastChannel and localStorage
+  useEffect(() => {
+    const handlePaymentReceived = (data: any) => {
+      if (hasFinishedRef.current) return;
+      if (data && data.type === 'QRIS_PAID') {
+        hasFinishedRef.current = true;
+        setQrisPaidStatus(true);
+        setQrisPaidApp(data.app || 'GoPay');
+        soundManager.playCashDrawer();
+        setTimeout(() => {
+          soundManager.playSuccess();
+          handleFinishTransaction('qris');
+        }, 1200);
+      }
+    };
+
+    let bc: BroadcastChannel | null = null;
+    if ('BroadcastChannel' in window) {
+      try {
+        bc = new BroadcastChannel('ridex_qris_sync');
+        bc.onmessage = (event) => {
+          handlePaymentReceived(event.data);
+        };
+      } catch (e) {
+        console.warn('BroadcastChannel error', e);
+      }
+    }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'ridex_last_qris_paid' && e.newValue) {
+        try {
+          const data = JSON.parse(e.newValue);
+          handlePaymentReceived(data);
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
   // Change Calculation
   const change = useMemo(() => {
     if (selectedMethod === 'cash') {
@@ -77,8 +150,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setCashTendered(cleanNum);
   };
 
-  const handleFinishTransaction = () => {
-    if (selectedMethod === 'cash' && isCashInsufficient) {
+  const handleFinishTransaction = (overrideMethod?: PaymentMethod) => {
+    const finalMethod = overrideMethod || (isSplitPayment ? 'split' : selectedMethod);
+    if (finalMethod === 'cash' && isCashInsufficient) {
       soundManager.playAlert();
       return;
     }
@@ -98,7 +172,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
 
     const completedOrder: CompletedOrder = {
-      orderId: `ord_${Date.now()}`,
+      orderId: currentOrderId,
       orderNumber: generateOrderNumber(),
       timestamp: formatDateTime(),
       cashierName,
@@ -112,8 +186,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       tax,
       serviceCharge,
       grandTotal,
-      paymentMethod: isSplitPayment ? 'split' : selectedMethod,
-      amountPaid: selectedMethod === 'cash' ? cashTendered : grandTotal,
+      paymentMethod: finalMethod,
+      amountPaid: finalMethod === 'cash' ? cashTendered : grandTotal,
       change,
       splitDetails,
     };
@@ -310,32 +384,115 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </div>
               )}
 
-              {/* QRIS SCREEN DISPLAY */}
+              {/* QRIS SCREEN DISPLAY (SCANNABLE DINAMIS + LIVE POLLING + SIMULASI SCAN) */}
               {selectedMethod === 'qris' && (
-                <div className="bg-stone-950 p-4 rounded-xl border border-stone-800 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                  <div className="p-3 bg-white rounded-xl shadow-md shrink-0">
-                    <img
-                      src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=00020101021226600016ID.CO.RIDEXCAFE0118936009990001020304055204581253033605408"
-                      alt="QRIS Ridex Cafe"
-                      className="w-32 h-32"
-                    />
-                  </div>
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex items-center justify-center sm:justify-start gap-2">
-                      <span className="px-2 py-0.5 rounded bg-rose-600 text-[10px] font-black text-white tracking-widest uppercase">
-                        QRIS
-                      </span>
-                      <span className="text-xs font-bold text-stone-200">RIDEX CAFE CILACAP</span>
+                <div className="bg-stone-950 p-4 sm:p-5 rounded-2xl border border-stone-800 space-y-4">
+                  {qrisPaidStatus ? (
+                    <div className="bg-emerald-950/50 border border-emerald-500/50 rounded-xl p-5 text-center space-y-3 animate-fadeIn">
+                      <div className="w-14 h-14 rounded-full bg-emerald-500/20 border-2 border-emerald-400 text-emerald-400 flex items-center justify-center mx-auto">
+                        <CheckCircle2 className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                          Pembayaran QRIS Berhasil Diterima!
+                        </span>
+                        <h4 className="text-lg font-black text-white mt-0.5">Lunas via {qrisPaidApp.toUpperCase()}</h4>
+                        <p className="text-xs text-stone-300 font-mono mt-1">
+                          Nominal: {formatRupiah(grandTotal)} · Meja {tableNumber || '01'}
+                        </p>
+                      </div>
+                      <div className="text-[11px] text-emerald-300/80 animate-pulse">
+                        Menyimpan transaksi dan mencetak struk...
+                      </div>
                     </div>
-                    <p className="text-xs text-stone-400 font-mono">NMID: ID1020268884920</p>
-                    <p className="text-xs text-stone-300">
-                      Pelanggan dapat memindai QRIS menggunakan BCA, Mandiri, GoPay, OVO, ShopeePay, atau Dana.
-                    </p>
-                    <div className="pt-1 flex items-center justify-center sm:justify-start gap-1.5 text-xs text-amber-400">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Verifikasi otomatis aktif (Simulasi)</span>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                      {/* Dynamic Scannable QR Code */}
+                      <div className="p-3 bg-white rounded-xl shadow-xl shrink-0 flex flex-col items-center border-2 border-amber-800/30">
+                        {qrDataUrl ? (
+                          <img
+                            src={qrDataUrl}
+                            alt="QRIS Dinamis Ridex Cafe"
+                            className="w-36 h-36 object-contain"
+                          />
+                        ) : (
+                          <div className="w-36 h-36 flex items-center justify-center bg-stone-100 text-stone-500 text-xs">
+                            Membuat QR...
+                          </div>
+                        )}
+                        <span className="text-[9px] font-mono text-stone-600 font-bold mt-1">SCAN VIA SMARTPHONE</span>
+                      </div>
+
+                      {/* QRIS Merchant & Live Polling Info */}
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center justify-center sm:justify-start gap-2">
+                          <span className="px-2 py-0.5 rounded bg-rose-600 text-[10px] font-black text-white tracking-widest uppercase">
+                            QRIS
+                          </span>
+                          <span className="text-xs font-bold text-stone-200">RIDEX CAFE CILACAP</span>
+                        </div>
+                        <div className="text-xs text-stone-400 font-mono">
+                          NMID: <strong className="text-stone-300">ID1020268884920</strong> · No: <strong className="text-amber-400">{currentOrderId}</strong>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-stone-900 border border-stone-800 flex items-center justify-between">
+                          <span className="text-xs text-stone-400">Total Tagihan:</span>
+                          <span className="text-lg font-mono font-bold text-amber-400">{formatRupiah(grandTotal)}</span>
+                        </div>
+
+                        {/* Live Polling Status */}
+                        <div className="flex items-center justify-center sm:justify-start gap-2 text-xs text-amber-400 bg-amber-950/40 border border-amber-600/30 px-3 py-1.5 rounded-xl">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                          <span className="font-medium text-[11px]">Menunggu pemindaian &amp; pembayaran pelanggan...</span>
+                        </div>
+
+                        {/* Quick Test Buttons */}
+                        <div className="pt-1 flex flex-wrap gap-2 justify-center sm:justify-start">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              soundManager.playClick();
+                              window.open(customerPayUrl, '_blank');
+                            }}
+                            className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-stone-700 active:scale-95 transition-all"
+                            title="Buka Halaman Checkout Pelanggan di Tab Baru"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
+                            <span>Simulasi Scan HP Pelanggan</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              soundManager.playClick();
+                              const fakePayload = {
+                                type: 'QRIS_PAID',
+                                orderId: currentOrderId,
+                                amount: grandTotal,
+                                table: tableNumber || '01',
+                                app: 'BCA Mobile',
+                                timestamp: Date.now(),
+                              };
+                              if ('BroadcastChannel' in window) {
+                                try {
+                                  const bc = new BroadcastChannel('ridex_qris_sync');
+                                  bc.postMessage(fakePayload);
+                                  setTimeout(() => bc.close(), 500);
+                                } catch (e) {}
+                              }
+                              try {
+                                localStorage.setItem('ridex_last_qris_paid', JSON.stringify(fakePayload));
+                              } catch (e) {}
+                            }}
+                            className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-600/40 rounded-lg text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all"
+                            title="Konfirmasi Lunas Langsung (Uji 1 Tab)"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Simulasi Bayar di Tab Ini</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 
@@ -458,7 +615,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           <button
             disabled={selectedMethod === 'cash' && isCashInsufficient}
-            onClick={handleFinishTransaction}
+            onClick={() => handleFinishTransaction()}
             className="flex-1 py-3 px-4 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed text-stone-950 font-black rounded-xl transition-all shadow-lg shadow-amber-950/40 flex items-center justify-center gap-2 text-sm"
           >
             <Receipt className="w-4 h-4" />
