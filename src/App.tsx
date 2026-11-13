@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { LoginScreen } from './components/LoginScreen';
+import { LoginScreen, CustomerPayParams } from './components/LoginScreen';
 import { Header } from './components/Header';
 import { ProductCatalog } from './components/ProductCatalog';
 import { CartPanel } from './components/CartPanel';
@@ -56,6 +56,7 @@ export default function App() {
   const [mobilePosTab, setMobilePosTab] = useState<'catalog' | 'cart'>('catalog');
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState<boolean>(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState<boolean>(false);
+  const [scannedPayParams, setScannedPayParams] = useState<CustomerPayParams | null>(null);
 
   // Cashier & System State
   const [initialDrawerCash] = useState<number>(500000); // Rp 500.000 modal awal
@@ -539,16 +540,16 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [cartItems.length, isPaymentOpen, currentRole, currentUser]);
 
-  // 0. Customer QRIS Checkout Mode (?pay=1 or ?mode=customer-pay)
+  // 0. Customer QRIS Checkout Mode (?pay=1 or ?mode=customer-pay or scanned from Login QR Scanner)
   const urlParams = new URLSearchParams(window.location.search);
   const isCustomerPay = urlParams.get('pay') === '1' || urlParams.get('mode') === 'customer-pay';
 
-  if (isCustomerPay) {
-    const orderId = urlParams.get('id') || urlParams.get('orderId') || 'RDX-998877';
-    const amount = parseInt(urlParams.get('amt') || urlParams.get('amount') || '45000', 10);
-    const tableNumber = urlParams.get('tbl') || urlParams.get('table') || '04';
-    const customerName = urlParams.get('cust') || urlParams.get('customer') || '';
-    const rawItems = urlParams.get('items') || '';
+  if (scannedPayParams || isCustomerPay) {
+    const orderId = scannedPayParams?.orderId || urlParams.get('id') || urlParams.get('orderId') || 'RDX-998877';
+    const amount = scannedPayParams?.amount || parseInt(urlParams.get('amt') || urlParams.get('amount') || '45000', 10);
+    const tableNumber = scannedPayParams?.tableNumber || urlParams.get('tbl') || urlParams.get('table') || '04';
+    const customerName = scannedPayParams?.customerName || urlParams.get('cust') || urlParams.get('customer') || '';
+    const rawItems = scannedPayParams?.rawItems || urlParams.get('items') || '';
 
     return (
       <CustomerPayScreen
@@ -563,7 +564,12 @@ export default function App() {
 
   // 1. If not logged in -> SHOW AUTHENTICATION LOGIN CARD
   if (!currentUser) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <LoginScreen
+        onLoginSuccess={handleLoginSuccess}
+        onEnterCustomerPay={(params) => setScannedPayParams(params)}
+      />
+    );
   }
 
   // 2. Logged-in State -> SHOW FULL POS & WORKSPACE

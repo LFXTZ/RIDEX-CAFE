@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   CheckCircle2, 
   CreditCard, 
@@ -42,12 +42,27 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
   customerName,
   rawItems,
 }) => {
-  const [selectedApp, setSelectedApp] = useState<string>('GoPay');
+  const [selectedApp, setSelectedApp] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [paymentTime, setPaymentTime] = useState<string>('');
   const [showItemDetails, setShowItemDetails] = useState<boolean>(true);
   const [downloadSuccessToast, setDownloadSuccessToast] = useState<boolean>(false);
+
+  // Absolute Scroll Rule: Strip overflow-hidden & fixed heights from html & body while in Customer Pay view
+  useEffect(() => {
+    const prevHtmlClass = document.documentElement.className;
+    const prevBodyClass = document.body.className;
+
+    document.documentElement.classList.remove('overflow-hidden', 'h-screen', 'h-[100dvh]', 'max-h-[100dvh]');
+    document.documentElement.classList.add('overflow-y-auto');
+    document.body.className = 'min-h-screen w-full overflow-y-auto bg-stone-950 text-amber-50 antialiased';
+
+    return () => {
+      document.documentElement.className = prevHtmlClass;
+      document.body.className = prevBodyClass;
+    };
+  }, []);
 
   // Parse items from query param or localStorage cache
   const orderData = useMemo(() => {
@@ -149,6 +164,11 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
   ];
 
   const handleConfirmPayment = () => {
+    if (!selectedApp) {
+      soundManager.playAlert();
+      return;
+    }
+
     soundManager.playClick();
     setIsProcessing(true);
 
@@ -197,6 +217,8 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
       } catch (e) {
         console.warn('localStorage error:', e);
       }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 1100);
   };
 
@@ -229,7 +251,7 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
       orderData.serviceCharge > 0 ? `Service (5%) : ${formatRupiah(orderData.serviceCharge)}` : '',
       '==========================================',
       `TOTAL DIBAYAR: ${formatRupiah(amount)}`,
-      `METODE       : QRIS (${selectedApp.toUpperCase()}) - LUNAS`,
+      `METODE       : QRIS (${(selectedApp || 'QRIS').toUpperCase()}) - LUNAS`,
       `NMID         : ID1020268884920`,
       `Ref ID       : RDX-TXN-${Date.now().toString().slice(-6)}`,
       '==========================================',
@@ -264,12 +286,12 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] w-full bg-stone-950 text-amber-50 flex flex-col items-center justify-between p-3 sm:p-6 pb-36 font-sans select-none overflow-y-auto">
+    <div className="min-h-screen w-full overflow-y-auto bg-stone-950 text-amber-50 pb-32 px-4 pt-6 font-sans select-none relative">
       {/* Background ambient lighting */}
       <div className="fixed -top-24 -left-24 w-80 h-80 bg-amber-600/10 rounded-full blur-3xl pointer-events-none"></div>
       <div className="fixed -bottom-24 -right-24 w-80 h-80 bg-amber-700/10 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="w-full max-w-md mx-auto my-auto flex flex-col space-y-4 relative z-10 py-2">
+      <div className="w-full max-w-md mx-auto flex flex-col space-y-4 relative z-10">
         {/* Brand Header */}
         <div className="text-center flex flex-col items-center space-y-2">
           <div className="w-16 h-16 rounded-2xl bg-[#f5ede4] p-1.5 shadow-xl border border-amber-800/30 flex items-center justify-center overflow-hidden hover:scale-105 transition-transform">
@@ -406,11 +428,18 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
               </div>
             </div>
 
-            {/* Choose E-Wallet / M-Banking App */}
+            {/* Choose E-Wallet / M-Banking App (ALL UNSELECTED BY DEFAULT) */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-stone-300 block">
-                Pilih Aplikasi Pembayaran Anda:
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-stone-300">
+                  Pilih Aplikasi Pembayaran Anda:
+                </label>
+                {!selectedApp && (
+                  <span className="text-[10px] font-bold text-amber-400 animate-pulse">
+                    Wajib pilih 1 metode
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 {paymentApps.map((app) => (
                   <button
@@ -452,25 +481,6 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
                 Pembayaran Anda dilindungi enkripsi standar Bank Indonesia (QRIS ASPI).
               </p>
             </div>
-
-            {/* Optional in-card fallback button (for desktop view) */}
-            <button
-              onClick={handleConfirmPayment}
-              disabled={isProcessing}
-              className="w-full py-3.5 px-4 bg-amber-600 hover:bg-amber-500 disabled:bg-stone-800 disabled:text-stone-500 text-stone-950 font-black rounded-xl transition-all shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-base sm:flex hidden"
-            >
-              {isProcessing ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-stone-950 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Memproses Pembayaran QRIS...</span>
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="w-5 h-5 text-stone-950" />
-                  <span>Konfirmasi &amp; Bayar Sekarang ({formatRupiah(amount)})</span>
-                </>
-              )}
-            </button>
           </div>
         ) : (
           /* ============================================================== */
@@ -489,7 +499,7 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
                 </span>
                 <h2 className="text-xl font-black text-white pt-1">Bukti Pembayaran Digital</h2>
                 <p className="text-xs text-stone-400 max-w-xs mx-auto">
-                  Transaksi QRIS Anda telah diverifikasi otomatis oleh kasir Ridex Cafe.
+                  Transaksi QRIS Anda telah diverifikasi otomatis oleh kasir Ridex Cafe. Scroll ke bawah untuk melihat struk lengkap.
                 </p>
               </div>
 
@@ -512,13 +522,13 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-stone-400">Metode &amp; Meja:</span>
-                  <span className="font-bold text-stone-200">QRIS ({selectedApp.toUpperCase()}) · Meja {tableNumber}</span>
+                  <span className="font-bold text-stone-200">QRIS ({(selectedApp || 'QRIS').toUpperCase()}) · Meja {tableNumber}</span>
                 </div>
               </div>
             </div>
 
-            {/* 100% WHITE THERMAL RECEIPT CONTAINER */}
-            <div className="bg-white text-slate-900 font-mono p-5 sm:p-6 rounded-2xl shadow-2xl space-y-3 border border-stone-200">
+            {/* 100% WHITE THERMAL RECEIPT CONTAINER (FULL SCROLLABLE) */}
+            <div className="bg-white text-slate-900 font-mono p-6 rounded-xl shadow-2xl w-full max-w-md mx-auto mt-6 mb-12 space-y-3 border border-stone-200">
               {/* Receipt Brand Header */}
               <div className="text-center space-y-1">
                 <div className="w-12 h-12 rounded-xl bg-[#f5ede4] p-1 mx-auto border border-amber-800/20 flex items-center justify-center overflow-hidden">
@@ -611,7 +621,7 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
               <div className="bg-slate-100 p-2.5 rounded-lg text-[10px] space-y-0.5 text-slate-700">
                 <div className="flex justify-between font-bold text-slate-900">
                   <span>METODE PEMBAYARAN</span>
-                  <span className="text-emerald-700">QRIS ({selectedApp.toUpperCase()}) - LUNAS</span>
+                  <span className="text-emerald-700">QRIS ({(selectedApp || 'QRIS').toUpperCase()}) - LUNAS</span>
                 </div>
                 <div className="flex justify-between">
                   <span>NMID</span>
@@ -673,23 +683,34 @@ export const CustomerPayScreen: React.FC<CustomerPayScreenProps> = ({
           </div>
         )}
 
-        {/* Sticky Mobile Pay Button Bar (Visible during checkout, hidden after payment) */}
+        {/* Unified Sleek Bottom Checkout Sheet (Visible during checkout, hidden after payment) */}
         {!isPaid && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-stone-900/95 backdrop-blur-md border-t border-stone-800 p-4 pb-6 shadow-[0_-10px_25px_rgba(0,0,0,0.8)]">
-            <button
-              onClick={handleConfirmPayment}
-              disabled={isProcessing}
-              className="w-full max-w-md mx-auto block bg-amber-600 hover:bg-amber-500 active:scale-95 text-amber-50 font-bold py-4 px-6 rounded-xl text-base shadow-lg cursor-pointer transition-all disabled:opacity-50"
-            >
-              {isProcessing ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Memproses Pembayaran QRIS...</span>
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-stone-900/95 backdrop-blur-xl border-t border-amber-500/20 px-4 py-3.5 shadow-[0_-12px_30px_rgba(0,0,0,0.85)]">
+            <div className="max-w-lg mx-auto flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <span className="text-[11px] text-stone-400 block font-medium">Total Tagihan (QRIS)</span>
+                <span className="text-amber-400 font-extrabold text-lg font-mono tabular-nums block truncate">
+                  {formatRupiah(amount)}
                 </span>
-              ) : (
-                <span>Konfirmasi &amp; Bayar Sekarang ({formatRupiah(amount)})</span>
-              )}
-            </button>
+              </div>
+              <button
+                type="button"
+                onClick={handleConfirmPayment}
+                disabled={!selectedApp || isProcessing}
+                className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-extrabold py-3 px-6 rounded-xl shadow-lg active:scale-95 transition whitespace-nowrap shrink-0 disabled:opacity-45 disabled:cursor-not-allowed disabled:active:scale-100 cursor-pointer text-sm sm:text-base"
+              >
+                {isProcessing ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-stone-950 border-t-transparent rounded-full animate-spin"></span>
+                    <span>Memproses...</span>
+                  </span>
+                ) : !selectedApp ? (
+                  <span>Pilih Metode Bayar</span>
+                ) : (
+                  <span>Bayar Sekarang →</span>
+                )}
+              </button>
+            </div>
           </div>
         )}
 

@@ -10,6 +10,7 @@ import {
   ArrowRight,
   AlertCircle,
   Copy,
+  Check,
   Receipt,
   ExternalLink,
   Smartphone,
@@ -65,6 +66,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [qrisPaidStatus, setQrisPaidStatus] = useState<boolean>(false);
   const [qrisPaidApp, setQrisPaidApp] = useState<string>('');
+  const [isLinkCopied, setIsLinkCopied] = useState<boolean>(false);
+  const copyTimerRef = useRef<number | null>(null);
   const hasFinishedRef = useRef<boolean>(false);
 
   const customerPayUrl = useMemo(() => {
@@ -72,13 +75,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     try {
       const curHost = window.location.hostname;
       const curProto = window.location.protocol;
+      const curOrigin = window.location.origin;
       if (
         curProto.startsWith('http') &&
         curHost &&
+        !curOrigin.includes('usercontent') &&
         !curHost.includes('localhost') &&
         !curHost.includes('127.0.0.1') &&
-        !curHost.includes('googleusercontent') &&
-        !curHost.includes('blob')
+        !curProto.includes('blob')
       ) {
         targetBaseUrl = window.location.origin + window.location.pathname;
       }
@@ -117,16 +121,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   }, [currentOrderId, grandTotal, tableNumber, guestName, orderType, items, subtotal, tax, serviceCharge, discountAmount, discountLabel]);
 
   useEffect(() => {
-    // Generate ISO standard QR with low error correction level L and quiet zone margin
-    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&ecc=L&margin=12&data=${encodeURIComponent(customerPayUrl)}`;
+    // Generate ISO standard QR with low error correction level L and wide quiet zone margin
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&ecc=L&margin=16&data=${encodeURIComponent(customerPayUrl)}`;
     
     // Test if image loads or fallback to QRCode canvas data URL
     const img = new Image();
     img.onload = () => setQrDataUrl(qrApiUrl);
     img.onerror = () => {
       QRCode.toDataURL(customerPayUrl, {
-        width: 220,
-        margin: 2,
+        width: 240,
+        margin: 4,
         errorCorrectionLevel: 'L',
         color: {
           dark: '#140E0B',
@@ -138,6 +142,57 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     };
     img.src = qrApiUrl;
   }, [customerPayUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) {
+        window.clearTimeout(copyTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleCopyPaymentLink = () => {
+    soundManager.playClick();
+    const triggerFeedback = () => {
+      setIsLinkCopied(true);
+      if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = window.setTimeout(() => {
+        setIsLinkCopied(false);
+      }, 2000);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(customerPayUrl)
+        .then(triggerFeedback)
+        .catch(() => {
+          try {
+            const ta = document.createElement('textarea');
+            ta.value = customerPayUrl;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+          } catch (e) {}
+          triggerFeedback();
+        });
+    } else {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = customerPayUrl;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch (e) {}
+      triggerFeedback();
+    }
+  };
 
   // Sync listener: BroadcastChannel and localStorage
   useEffect(() => {
@@ -461,28 +516,28 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                      {/* Dynamic Scannable QR Code with Quiet Zone */}
-                      <div className="bg-white p-4 rounded-2xl shadow-inner mx-auto w-fit shrink-0 flex flex-col items-center border border-stone-200">
+                    <div className="flex flex-col items-center gap-4 text-center">
+                      {/* Dynamic Scannable QR Code with Wide White Quiet Zone */}
+                      <div className="bg-white p-4 rounded-2xl shadow-lg mx-auto w-fit shrink-0 flex flex-col items-center border border-stone-200">
                         {qrDataUrl ? (
                           <img
                             src={qrDataUrl}
                             alt="QRIS Dinamis Ridex Cafe"
-                            className="w-[200px] h-[200px] object-contain block"
+                            className="w-[220px] h-[220px] sm:w-[240px] sm:h-[240px] object-contain block"
                           />
                         ) : (
-                          <div className="w-[200px] h-[200px] flex items-center justify-center bg-stone-100 text-stone-500 text-xs">
+                          <div className="w-[220px] h-[220px] sm:w-[240px] sm:h-[240px] flex items-center justify-center bg-stone-100 text-stone-500 text-xs">
                             Membuat QR ISO...
                           </div>
                         )}
-                        <span className="text-[10px] font-mono text-stone-700 font-black mt-2 tracking-wider">
-                          SCAN VIA KAMERA HP
+                        <span className="text-[10px] font-mono text-stone-800 font-black mt-2.5 tracking-wider uppercase">
+                          SCAN VIA HP / TABLET / LAPTOP
                         </span>
                       </div>
 
                       {/* QRIS Merchant & Live Polling Info */}
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center justify-center sm:justify-start gap-2">
+                      <div className="space-y-2.5 w-full">
+                        <div className="flex items-center justify-center gap-2">
                           <span className="px-2 py-0.5 rounded bg-rose-600 text-[10px] font-black text-white tracking-widest uppercase">
                             QRIS
                           </span>
@@ -497,24 +552,55 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         </div>
 
                         {/* Live Polling Status */}
-                        <div className="flex items-center justify-center sm:justify-start gap-2 text-xs text-amber-400 bg-amber-950/40 border border-amber-600/30 px-3 py-1.5 rounded-xl">
+                        <div className="flex items-center justify-center gap-2 text-xs text-amber-400 bg-amber-950/40 border border-amber-600/30 px-3 py-1.5 rounded-xl">
                           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
                           <span className="font-medium text-[11px]">Menunggu pemindaian &amp; pembayaran pelanggan...</span>
                         </div>
 
-                        {/* Quick Action Buttons */}
-                        <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center sm:justify-start">
+                        {/* Toast Feedback for Copy Link */}
+                        {isLinkCopied && (
+                          <div className="px-3 py-2 rounded-xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs font-semibold flex items-center justify-center gap-1.5 animate-fadeIn">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                            <span>Link pembayaran tersalin</span>
+                          </div>
+                        )}
+
+                        {/* 3 Responsive Action Buttons */}
+                        <div className="pt-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
                           <button
                             type="button"
                             onClick={() => {
                               soundManager.playClick();
                               window.open(customerPayUrl, '_blank');
                             }}
-                            className="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-stone-700 active:scale-95 transition-all cursor-pointer"
+                            className="px-3 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-stone-700 active:scale-95 transition-all cursor-pointer"
                             title="Buka Halaman Checkout Pelanggan di Tab Baru"
                           >
-                            <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
-                            <span>Buka Halaman Bayar (Simulasi Scan)</span>
+                            <ExternalLink className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                            <span>Buka Link Bayar (Tab Baru)</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={handleCopyPaymentLink}
+                            className={`px-3 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border active:scale-95 transition-all cursor-pointer ${
+                              isLinkCopied
+                                ? 'bg-emerald-950/60 border-emerald-500/60 text-emerald-300'
+                                : 'bg-stone-800 hover:bg-stone-700 border-amber-600/40 text-amber-300 hover:text-amber-200'
+                            }`}
+                            title="Salin Link Pembayaran ke Clipboard"
+                          >
+                            {isLinkCopied ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                <span>Tersalin ✓</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                <span>Salin Link Pembayaran</span>
+                              </>
+                            )}
                           </button>
 
                           <button
@@ -539,12 +625,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                               try {
                                 localStorage.setItem('ridex_last_qris_paid', JSON.stringify(fakePayload));
                               } catch (e) {}
+                              if (!hasFinishedRef.current) {
+                                hasFinishedRef.current = true;
+                                setQrisPaidStatus(true);
+                                setQrisPaidApp('BCA Mobile');
+                                soundManager.playCashDrawer();
+                                setTimeout(() => {
+                                  soundManager.playSuccess();
+                                  handleFinishTransaction('qris');
+                                }, 1200);
+                              }
                             }}
-                            className="px-3 py-2 bg-amber-600 hover:bg-amber-500 text-stone-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
-                            title="Konfirmasi Pembayaran QRIS Diterima"
+                            className="px-3 py-2.5 bg-amber-600 hover:bg-amber-500 text-stone-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                            title="Konfirmasi QRIS Lunas Secara Manual"
                           >
-                            <Sparkles className="w-3.5 h-3.5 text-stone-950" />
-                            <span>Konfirmasi Pembayaran QRIS Diterima</span>
+                            <CheckCircle2 className="w-3.5 h-3.5 text-stone-950 shrink-0" />
+                            <span>Konfirmasi QRIS Lunas</span>
                           </button>
                         </div>
                       </div>

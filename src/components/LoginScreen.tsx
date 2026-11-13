@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
 import { 
   Coffee, 
   Wifi, 
@@ -9,20 +10,36 @@ import {
   ArrowRight,
   Lock,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Camera,
+  X
 } from 'lucide-react';
 import { UserAccount } from '../types/pos';
 import { DEMO_USERS } from '../data/mockProducts';
 import { soundManager } from '../utils/audio';
 
-interface LoginScreenProps {
-  onLoginSuccess: (user: UserAccount) => void;
+export interface CustomerPayParams {
+  orderId: string;
+  amount: number;
+  tableNumber: string;
+  customerName?: string;
+  rawItems?: string;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
+interface LoginScreenProps {
+  onLoginSuccess: (user: UserAccount) => void;
+  onEnterCustomerPay?: (params: CustomerPayParams) => void;
+}
+
+export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onEnterCustomerPay }) => {
   const [pinInput, setPinInput] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isAutoFilling, setIsAutoFilling] = useState<boolean>(false);
+  const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
+  const [scannerStatus, setScannerStatus] = useState<string>('Arahkan kotak QRIS Ridex Cafe ke kamera perangkat Anda.');
+  const [cameraError, setCameraError] = useState<string>('');
+  const [manualQrUrl, setManualQrUrl] = useState<string>('');
+  const qrScannerRef = useRef<Html5Qrcode | null>(null);
 
   const handleKeyPress = (digit: string) => {
     if (isAutoFilling) return;
@@ -88,6 +105,130 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     });
   };
 
+  const stopCameraScanner = async () => {
+    if (qrScannerRef.current) {
+      try {
+        await qrScannerRef.current.stop();
+        qrScannerRef.current.clear();
+      } catch (e) {
+        // ignore cleanup errors
+      } finally {
+        qrScannerRef.current = null;
+      }
+    }
+  };
+
+  const processScannedQrText = (rawText: string) => {
+    soundManager.playSuccess();
+    void stopCameraScanner();
+    setIsScannerOpen(false);
+
+    let parsedUrl: URL | null = null;
+    try {
+      if (rawText.startsWith('?')) {
+        parsedUrl = new URL(window.location.origin + window.location.pathname + rawText);
+      } else {
+        parsedUrl = new URL(rawText);
+      }
+    } catch {
+      const qIdx = rawText.indexOf('?');
+      if (qIdx !== -1) {
+        try {
+          parsedUrl = new URL(window.location.origin + window.location.pathname + rawText.slice(qIdx));
+        } catch {}
+      }
+    }
+
+    if (
+      parsedUrl &&
+      (parsedUrl.searchParams.get('pay') === '1' || parsedUrl.searchParams.get('mode') === 'customer-pay')
+    ) {
+      const params: CustomerPayParams = {
+        orderId: parsedUrl.searchParams.get('id') || parsedUrl.searchParams.get('orderId') || 'RDX-998877',
+        amount: parseInt(parsedUrl.searchParams.get('amt') || parsedUrl.searchParams.get('amount') || '45000', 10),
+        tableNumber: parsedUrl.searchParams.get('tbl') || parsedUrl.searchParams.get('table') || '04',
+        customerName: parsedUrl.searchParams.get('cust') || parsedUrl.searchParams.get('customer') || '',
+        rawItems: parsedUrl.searchParams.get('items') || '',
+      };
+      if (onEnterCustomerPay) {
+        onEnterCustomerPay(params);
+      } else {
+        window.location.href = parsedUrl.toString();
+      }
+    } else if (parsedUrl) {
+      window.location.href = parsedUrl.toString();
+    } else {
+      setIsScannerOpen(true);
+      setScannerStatus('Format QR / Link tidak dikenali sebagai tagihan Ridex Cafe.');
+    }
+  };
+
+  useEffect(() => {
+    if (!isScannerOpen) {
+      void stopCameraScanner();
+      return;
+    }
+
+    let isMounted = true;
+    setCameraError('');
+    setScannerStatus('Mengaktifkan kamera perangkat...');
+
+    const startScanner = async () => {
+      try {
+        await new Promise((r) => setTimeout(r, 150));
+        if (!isMounted) return;
+        const scanner = new Html5Qrcode('react-qr-live-reader');
+        qrScannerRef.current = scanner;
+
+        try {
+          await scanner.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 210, height: 210 } },
+            (decodedText) => processScannedQrText(decodedText),
+            () => {}
+          );
+          if (isMounted) setScannerStatus('Kamera aktif! Arahkan ke QRIS Ridex Cafe.');
+        } catch {
+          const devices = await Html5Qrcode.getCameras();
+          if (devices && devices.length > 0 && isMounted) {
+            await scanner.start(
+              devices[0].id,
+              { fps: 10, qrbox: { width: 210, height: 210 } },
+              (decodedText) => processScannedQrText(decodedText),
+              () => {}
+            );
+            if (isMounted) setScannerStatus('Webcam aktif! Arahkan ke QRIS Ridex Cafe.');
+          } else {
+            throw new Error('No camera available');
+          }
+        }
+      } catch {
+        if (isMounted) {
+          setCameraError('Izin kamera belum diberikan atau kamera tidak terdeteksi. Gunakan kolom tempel link di bawah.');
+          setScannerStatus('Silakan tempel link pembayaran QRIS secara manual di bawah.');
+        }
+      }
+    };
+
+    void startScanner();
+
+    return () => {
+      isMounted = false;
+      void stopCameraScanner();
+    };
+  }, [isScannerOpen]);
+
+  const handleManualUrlSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = manualQrUrl.trim();
+    if (!trimmed) {
+      soundManager.playAlert();
+      setScannerStatus('Mohon tempel link pembayaran QRIS terlebih dahulu.');
+      return;
+    }
+    processScannedQrText(trimmed);
+  };
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 overflow-y-auto bg-stone-950 relative select-none">
       {/* Decorative ambient glowing warm coffee accents */}
@@ -119,6 +260,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span>Smart POS &amp; Multi-Role System · Cilacap Outlet Online</span>
         </div>
+
+        {/* Cross-Device Customer Scan QR Button */}
+        <button
+          type="button"
+          onClick={() => {
+            soundManager.playClick();
+            setManualQrUrl('');
+            setIsScannerOpen(true);
+          }}
+          className="mt-3 px-4 py-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-amber-500/40 hover:border-amber-400 text-xs font-bold text-amber-300 flex items-center gap-2 transition-all active:scale-95 shadow-sm cursor-pointer"
+          title="Pindai QR Pembayaran Pelanggan via Kamera HP, Tablet, Laptop, atau PC"
+        >
+          <Camera className="w-4 h-4 text-amber-400" />
+          <span>Scan QR Pembayaran</span>
+        </button>
 
         {/* PIN Display & Masked Dots */}
         <div className="w-full mt-5 flex flex-col items-center">
@@ -269,6 +425,87 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           Loka F&amp;B POS Engine · Ridex Cafe Architecture v2.5
         </p>
       </div>
+
+      {/* Live QR Scanner Modal (Camera + Manual Link Paste Fallback) */}
+      {isScannerOpen && (
+        <div className="fixed inset-0 z-[60] bg-stone-950/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+          <div className="bg-stone-900 border border-stone-700/80 rounded-2xl w-full max-w-md flex flex-col shadow-2xl overflow-hidden my-auto">
+            <div className="p-4 bg-stone-900 border-b border-stone-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Camera className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Scan QR Pembayaran</h3>
+                  <p className="text-[11px] text-stone-400">Kamera HP, Tablet, Webcam Laptop/PC, atau tempel link</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playClick();
+                  setIsScannerOpen(false);
+                }}
+                className="p-1.5 text-stone-400 hover:text-white hover:bg-stone-800 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div className="space-y-2">
+                <div className="w-full min-h-[240px] bg-stone-950 border border-stone-800 rounded-xl overflow-hidden flex items-center justify-center relative">
+                  <div id="react-qr-live-reader" className="w-full" />
+                  {cameraError && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-stone-950/95 space-y-1">
+                      <p className="text-xs font-semibold text-amber-400">{cameraError}</p>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-center text-stone-400 font-medium">{scannerStatus}</p>
+              </div>
+
+              <div className="flex items-center gap-2 text-[10px] text-stone-500 uppercase tracking-wider font-bold">
+                <div className="h-px flex-1 bg-stone-800" />
+                <span>Atau Tempel Link Pembayaran</span>
+                <div className="h-px flex-1 bg-stone-800" />
+              </div>
+
+              <form onSubmit={handleManualUrlSubmit} className="space-y-2">
+                <label className="text-xs font-semibold text-stone-300 block">Link Pembayaran QRIS:</label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={manualQrUrl}
+                    onChange={(e) => setManualQrUrl(e.target.value)}
+                    placeholder="Tempel link ?pay=1&id=RDX-... di sini"
+                    className="flex-1 bg-stone-950 border border-stone-700 focus:border-amber-500 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-stone-950 font-black rounded-xl text-xs whitespace-nowrap transition-all active:scale-95 cursor-pointer"
+                  >
+                    Buka Bayar →
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div className="p-3 bg-stone-950/60 border-t border-stone-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playClick();
+                  setIsScannerOpen(false);
+                }}
+                className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Tutup Kamera
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
